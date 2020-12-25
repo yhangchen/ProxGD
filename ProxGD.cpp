@@ -18,7 +18,6 @@ double ProxGD(int fmode, int hmode, int tmode, MatrixXd A, MatrixXd b, MatrixXd 
 	MatrixXd x_star = x0;
 	delta_x.setOnes();
 	// 初始化变量，在一次循环中会涉及new_x以及prev_x，分别表示新的x和旧的x，delta_x为二者的差，x_star为算法第一步
-	// 得到的中间值。将delta_x设为全1矩阵保证能进入下面的循环。
 
 	int iter = 0;
 	double t;
