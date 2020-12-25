@@ -1,6 +1,6 @@
 #include <iostream>
 #include <Eigen/Dense>
-#include "ProxGD.h"
+// #include "ProxGD.h"
 #include <string>
 using namespace Eigen;
 using namespace std;
@@ -93,14 +93,15 @@ int Objective::check(MatrixXd x)
     return 0;
 }
 
-void main()
+int main()
 {
-    // MatrixXd A = MatrixXd::Random(3, 3);
-    // MatrixXd b = MatrixXd::Random(3, 1);
-    // MatrixXd x = MatrixXd::Random(3, 1);
-    // Objective f(1, A, b);
+    MatrixXd A = MatrixXd::Random(3, 3);
+    MatrixXd b = MatrixXd::Random(3, 1);
+    MatrixXd x = MatrixXd::Random(3, 1);
+    Objective f((string) "Logistic", A, b);
 
-    // cout
-    //     << "Test:" << endl
-    //     << f.check(x) << endl;
+    cout
+        << "Test:" << endl
+        << f.f(x) << endl;
+    return 0;
 }

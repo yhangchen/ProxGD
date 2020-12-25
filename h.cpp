@@ -2,7 +2,7 @@
 #include <Eigen/Dense>
 #include <cfloat>
 #include <stdarg.h>
-#include "ProxGD.h"
+// #include "ProxGD.h"
 #include <string>
 using namespace Eigen;
 using namespace std;
@@ -14,7 +14,7 @@ private:
     int R0;
     string mode;
     VectorXd w;
-    MatrixXd A, b, L, U;
+    MatrixXd A, b, L, U, AAT;
 
 public:
     Penalty(string mode, int n, ...);
@@ -56,8 +56,9 @@ public:
     MatrixXd Ind_rank_prox(MatrixXd x);
 };
 
-Penalty::Penalty(string mode, int n, ...)
+Penalty::Penalty(string mode0, int n, ...)
 {
+    mode = mode0;
     if (mode.substr(0, 3) == "Ind")
     {
         if (n >= 1)
@@ -66,26 +67,27 @@ Penalty::Penalty(string mode, int n, ...)
             va_start(args, n);
             if ((mode == "Ind_rank") || (mode == "Ind_L_0"))
             {
-                int R0 = va_arg(args, int);
+                R0 = va_arg(args, int);
             }
             else if (mode == "Ind_box")
             {
-                MatrixXd L = va_arg(args, MatrixXd);
-                MatrixXd U = va_arg(args, MatrixXd);
+                L = va_arg(args, MatrixXd);
+                U = va_arg(args, MatrixXd);
             }
             else if (mode == "Ind_affine")
             {
-                MatrixXd A = va_arg(args, MatrixXd);
-                MatrixXd b = va_arg(args, MatrixXd);
+                A = va_arg(args, MatrixXd);
+                b = va_arg(args, MatrixXd);
+                AAT = A * A.transpose();
             }
-            else if (mode == "Ind_affine")
+            else if (mode == "Ind_half")
             {
-                MatrixXd A = va_arg(args, MatrixXd);
-                double constant = va_arg(args, double);
+                A = va_arg(args, MatrixXd);
+                constant = va_arg(args, double);
             }
             else
             {
-                double R = va_arg(args, double);
+                R = va_arg(args, double);
             }
         }
     }
@@ -93,6 +95,8 @@ Penalty::Penalty(string mode, int n, ...)
     {
         va_list args;
         va_start(args, n);
+        cout << 1 << endl;
+
         double mu = va_arg(args, double);
         if (mode == "Elastic")
             double alpha = va_arg(args, double);
@@ -104,8 +108,11 @@ Penalty::Penalty(string mode, int n, ...)
 
 double Penalty::h(MatrixXd x)
 {
+    cout << mode << endl;
     if (mode == "L_0")
+    {
         return L_0(x);
+    }
     else if (mode == "L_1")
         return L_1(x);
     else if (mode == "L_2")
@@ -266,8 +273,7 @@ MatrixXd Penalty::Ind_affine_prox(MatrixXd x)
     assert(b.rows() == A.rows());
     Map<VectorXd> v(x.data(), x.size());
     VectorXd result = A * v - b;
-    MatrixXd ATA = A * A.transpose();
-    result = ATA.ldlt().solve(result);
+    result = AAT.ldlt().solve(result);
     result = v - A.transpose() * result;
     Map<MatrixXd> Result(result.data(), x.rows(), x.cols());
     return Result;
@@ -286,7 +292,7 @@ MatrixXd Penalty::Ind_psd_prox(MatrixXd x)
     assert(x.cols() == x.rows());
     MatrixXd result = x;
     JacobiSVD<MatrixXd> svd((x + x.transpose()) / 2.0, ComputeThinU | ComputeThinV);
-    result = svd.matrixU() * (svd.singularValues().array()).max(0).matrix().asDiagonal() * svd.matrixV().transpose();
+    result = svd.matrixU() * svd.singularValues().cwiseMax(0).asDiagonal() * svd.matrixV().transpose();
     return result;
 }
 
@@ -531,12 +537,12 @@ MatrixXd Penalty::L_2_prox(MatrixXd x)
 
 int main()
 {
-    MatrixXd x = MatrixXd::Random(3, 3);
-    Penalty h;
+    MatrixXd x = MatrixXd::Random(3, 1);
+    Penalty p((string) "L_1", (double)0.1);
     cout << "Mat:" << endl
          << x << endl;
     cout << "Th:" << endl
-         << h.Ind_psd_prox(x) << endl;
+         << p.h(x) << endl;
 
     return 0;
 }
