@@ -2,65 +2,87 @@
 #include <Eigen/Dense>
 #include "ProxGD.h"
 #include <math.h>
-#include <assert.h>
+#include<assert.h>
 using namespace Eigen;
 using namespace std;
 
-double ProxGD(int fmode, int hmode, int tmode, MatrixXd A, MatrixXd b, MatrixXd x0, double mu, double epsilon, double gamma, int M)
+
+Result ProxGD(int fmode, int hmode, int tmode, MatrixXd A, MatrixXd b, MatrixXd x0, double mu, double epsilon, double gamma, int M)
 {
-	// ç”¨äºè®¡ç®—f(x)+g(x)çš„æœ€å°å€¼ï¼Œè¾“å…¥å€¼fmodeã€hmodeã€tmodeåˆ†åˆ«å†³å®šfã€hä»¥åŠå…ˆæœç´¢çš„æ¨¡å¼ï¼ˆåˆ†åˆ«å¯¹åº”é¢˜ç›®ä¸­çš„ç¬¬ä¸‰ç‚¹ã€
-	// ç¬¬å››ç‚¹ã€ç¬¬äºŒç‚¹ï¼‰ã€‚Aï¼Œbæ˜¯fçš„å‚æ•°ï¼Œx0æ˜¯è¿­ä»£åˆå§‹å€¼ï¼Œmuæ˜¯hå‰é¢çš„ç³»æ•°ï¼Œepsilonæ˜¯è¿­ä»£ç»ˆæ­¢æ¡ä»¶çš„å‚æ•°ã€‚è¿”å›å€¼ç›®å‰
-	// æ˜¯å‡½æ•°æœ€å°å€¼ï¼Œåé¢åº”è¯¥ä¼šæ”¹æˆResultç±»ï¼ŒåŒæ—¶è¿”å›è¿­ä»£æ¬¡æ•°ï¼Œæœ€å°å€¼ä»¥åŠæœ€ä¼˜çš„xã€‚
+	int K = ceil(fabs(log2f(mu)));
+	double muk = mu * pow(2, K);
+	Result res(0, x0, 0);
+	int iter = 0;
+	double epsilonk = epsilon * pow(2, K);
+	for (int i = 0; i <= K; i++)
+	{
+		res = ProxGD_one_step(fmode, hmode, tmode, A, b, res.min_point(), muk, epsilonk, gamma, M);
+		muk /= 2;
+		epsilonk /= 2;
+		iter += res.iterations();
+	}
+	res.modify_iter(iter);
+	return res;
+}
+
+Result ProxGD_one_step(int fmode, int hmode, int tmode, MatrixXd A, MatrixXd b, MatrixXd x0, double mu, double epsilon, double gamma, int M)
+{
+	// ÓÃÓÚ¼ÆËãf(x)+g(x)µÄ×îĞ¡Öµ£¬ÊäÈëÖµfmode¡¢hmode¡¢tmode·Ö±ğ¾ö¶¨f¡¢hÒÔ¼°ÏÈËÑË÷µÄÄ£Ê½£¨·Ö±ğ¶ÔÓ¦ÌâÄ¿ÖĞµÄµÚÈıµã¡¢
+	// µÚËÄµã¡¢µÚ¶şµã£©¡£A£¬bÊÇfµÄ²ÎÊı£¬x0ÊÇµü´ú³õÊ¼Öµ£¬muÊÇhÇ°ÃæµÄÏµÊı£¬epsilonÊÇµü´úÖÕÖ¹Ìõ¼şµÄ²ÎÊı¡£·µ»ØÖµÄ¿Ç°
+	// ÊÇº¯Êı×îĞ¡Öµ£¬ºóÃæÓ¦¸Ã»á¸Ä³ÉResultÀà£¬Í¬Ê±·µ»Øµü´ú´ÎÊı£¬×îĞ¡ÖµÒÔ¼°×îÓÅµÄx¡£
 
 	MatrixXd new_x = x0;
 	MatrixXd prev_x = x0;
 	MatrixXd delta_x = x0;
 	MatrixXd x_star = x0;
 	delta_x.setOnes();
-	// åˆå§‹åŒ–å˜é‡ï¼Œåœ¨ä¸€æ¬¡å¾ªç¯ä¸­ä¼šæ¶‰åŠnew_xä»¥åŠprev_xï¼Œåˆ†åˆ«è¡¨ç¤ºæ–°çš„xå’Œæ—§çš„xï¼Œdelta_xä¸ºäºŒè€…çš„å·®ï¼Œx_starä¸ºç®—æ³•ç¬¬ä¸€æ­¥
+	// ³õÊ¼»¯±äÁ¿£¬ÔÚÒ»´ÎÑ­»·ÖĞ»áÉæ¼°new_xÒÔ¼°prev_x£¬·Ö±ğ±íÊ¾ĞÂµÄxºÍ¾ÉµÄx£¬delta_xÎª¶şÕßµÄ²î£¬x_starÎªËã·¨µÚÒ»²½
+	// µÃµ½µÄÖĞ¼äÖµ¡£½«delta_xÉèÎªÈ«1¾ØÕó±£Ö¤ÄÜ½øÈëÏÂÃæµÄÑ­»·¡£
 
 	int iter = 0;
 	double t;
 	double *fhs = new double[M];
-	fhs[0] = f(fmode, A, b, new_x) + mu * h(hmode, new_x);
+	Objective f_obj(fmode, A, b);
+	fhs[0] = f_obj.f(new_x) + mu * h(hmode, new_x);
 	for (int i = 1; i < M; i++)
 	{
 		fhs[i] = fhs[0];
 	}
 	fhs[M - 1]++;
-	// åˆå§‹åŒ–å˜é‡ï¼Œtæ˜¯æ¯æ¬¡è¿­ä»£çš„æ­¥é•¿ï¼Œiteræ˜¯è¿­ä»£æ¬¡æ•°ã€‚fhsæ˜¯å‰Mæ­¥çš„å‡½æ•°å€¼ï¼Œæ¯æ¬¡è¿­ä»£æ›´æ–°ä¸€ä¸ªå…ƒç´ ï¼Œiter % Mè¡¨ç¤ºå½“å‰å‡½
-	// æ•°å€¼ï¼Œå¾€å‰æ¨æ˜¯å‰é¢çš„å‡½æ•°å€¼ï¼Œç¬¬0ä½å¾€å‰æ¨æ˜¯ç¬¬M - 1ä½ï¼Œåˆå§‹åŒ–ç¬¬0ä½å’Œç¬¬M - 1ä½ä¿è¯èƒ½è¿›å…¥å¾ªç¯ã€‚
+	// ³õÊ¼»¯±äÁ¿£¬tÊÇÃ¿´Îµü´úµÄ²½³¤£¬iterÊÇµü´ú´ÎÊı¡£fhsÊÇÇ°M²½µÄº¯ÊıÖµ£¬Ã¿´Îµü´ú¸üĞÂÒ»¸öÔªËØ£¬iter % M±íÊ¾µ±Ç°º¯
+	// ÊıÖµ£¬ÍùÇ°ÍÆÊÇÇ°ÃæµÄº¯ÊıÖµ£¬µÚ0Î»ÍùÇ°ÍÆÊÇµÚM - 1Î»£¬³õÊ¼»¯µÚ0Î»ºÍµÚM - 1Î»±£Ö¤ÄÜ½øÈëÑ­»·¡£
 
-	while ((fabs(fhs[iter % M] - fhs[(iter + M - 1) % M]) > epsilon) || (delta_x.squaredNorm() > epsilon))
+	while ((fabs(fhs[iter % M] - fhs[(iter + M - 1) % M]) > epsilon) && (delta_x.squaredNorm() > epsilon))
 	{
-		// è¿­ä»£ç»ˆæ­¢æ¡ä»¶ä¸ºå‡½æ•°å€¼å˜åŒ–æˆ–è€…è‡ªå˜é‡çš„å˜åŒ–å°äºç­‰äºepsilonï¼ˆè¿™é‡Œå¯ä»¥çœ‹å‡ºä¹‹å‰åˆå§‹åŒ–fhs[M - 1]å’Œdelta_xæ—¶çš„ç›®çš„ï¼‰
+		// µü´úÖÕÖ¹Ìõ¼şÎªº¯ÊıÖµ±ä»¯»òÕß×Ô±äÁ¿µÄ±ä»¯Ğ¡ÓÚµÈÓÚepsilon£¨ÕâÀï¿ÉÒÔ¿´³öÖ®Ç°³õÊ¼»¯fhs[M - 1]ºÍdelta_xÊ±µÄÄ¿µÄ£©
 
 		if (tmode == 1)
 		{
-			t = line_search(fmode, tmode, A, b, new_x, gamma, 1, (double)fhs[iter % M]);
+			t = line_search(f_obj, tmode, new_x, gamma, 1, (double)fhs[iter % M]);
 		}
 		else if (tmode == 2)
-			12;
 		{
-			t = line_search(fmode, tmode, A, b, new_x, gamma, 3, fhs, M, delta_x);
+			t = line_search(f_obj, tmode, new_x, gamma, 3, fhs, M, delta_x);
 		}
-		// é¦–å…ˆåˆ©ç”¨çº¿æœç´¢ç¡®å®šæ­¥é•¿
+		// Ê×ÏÈÀûÓÃÏßËÑË÷È·¶¨²½³¤
 
-		x_star = new_x - t * grad_f(fmode, A, b, new_x);
-		// ç„¶åè®¡ç®—ä¸­é—´å˜é‡x_star
+		x_star = new_x - t * f_obj.grad_f(new_x);
+		// È»ºó¼ÆËãÖĞ¼ä±äÁ¿x_star
 
 		prev_x = new_x;
-		new_x = prox_h(hmode, t * mu, x_star); // åˆ©ç”¨prox_hè®¡ç®—æ–°çš„x
+		new_x = prox_h(hmode, t * mu, x_star);// ÀûÓÃprox_h¼ÆËãĞÂµÄx
 		delta_x = new_x - prev_x;
-		// æ›´æ–°prev_xåå†æ›´æ–°new_xï¼Œç„¶åè®¡ç®—æ–°çš„delta_x
+		// ¸üĞÂprev_xºóÔÙ¸üĞÂnew_x£¬È»ºó¼ÆËãĞÂµÄdelta_x
 
 		iter = iter + 1;
-		// æ›´æ–°è¿­ä»£æ¬¡æ•°
+		// ¸üĞÂµü´ú´ÎÊı
 
-		fhs[iter % M] = f(fmode, A, b, new_x) + mu * h(hmode, new_x);
-		;
-		// æ›´æ–°fhsï¼›
+		fhs[iter % M] = f_obj.f(new_x) + mu * h(hmode, new_x);;
+		// ¸üĞÂfhs£»
+
 	}
 
-	return fhs[iter % M];
+	Result res(iter, new_x, fhs[iter % M]);
+	return res;
 }
+

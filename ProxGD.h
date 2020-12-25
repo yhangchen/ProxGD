@@ -2,34 +2,103 @@
 using namespace Eigen;
 using namespace std;
 
-class Result
-{ // Resultç±»ç”¨æ¥è¿”å›æœ€åçš„è®¡ç®—ç»“æœï¼Œå…¶å†…å®¹åŒ…æ‹¬æœ€ä¼˜çš„xï¼Œå‡½æ•°çš„æœ€å°å€¼ä»¥åŠè¿­ä»£æ¬¡æ•°ã€‚ï¼ˆè¿™ä¸ªç±»è¿˜æ²¡æœ‰å¼€å§‹å†™ï¼‰
+class Objective
+{
 public:
-    Result();
-    ~Result();
-    void show(); // showç”¨æ¥å±•ç¤ºè®¡ç®—ç»“æœï¼Œç›®å‰æ‰“ç®—å±•ç¤ºiterå’Œmin_value
-    MatrixXd min_point();
-
+	Objective(int mode, MatrixXd A, MatrixXd b);
+	double f(MatrixXd x);
+	MatrixXd grad_f(MatrixXd x);
+	double Frob(MatrixXd x);
+	MatrixXd Frob_grad(MatrixXd x);
+	double Logistic(MatrixXd x);
+	MatrixXd Logistic_grad(MatrixXd x);
+	int check(MatrixXd x);
 private:
-    MatrixXd x;       // æœ€ä¼˜çš„x
-    int iter;         // è¿­ä»£æ¬¡æ•°
-    double min_value; // å‡½æ•°çš„æœ€å°å€¼
+	int mode;
+	MatrixXd A;
+	MatrixXd b;
 };
 
-double ProxGD(int fmode, int hmode, int tmode, MatrixXd A, MatrixXd b, MatrixXd x0, double mu, double epsilon, double gamma, int M);
-// ç”¨äºè®¡ç®—f(x)+g(x)çš„æœ€å°å€¼ï¼Œè¯¦ç»†ä»‹ç»è§ProxGD.cpp
+class Penalty
+{
+private:
+	MatrixXd L1_soft(MatrixXd x, double mu);
 
+public:
+	int is_positive(MatrixXd x);
+	double L_0(MatrixXd x);
+	MatrixXd L_0_prox(MatrixXd x, double mu);
+	double L_1(MatrixXd x);
+	MatrixXd L_1_prox(MatrixXd x, double mu);
+	double L_2(MatrixXd x);
+	MatrixXd L_2_prox(MatrixXd x, double mu);
+	double L_12(MatrixXd x);
+	MatrixXd L_12_prox(MatrixXd x, double mu);
+	double L_21(MatrixXd x);
+	MatrixXd L_21_prox(MatrixXd x, double mu);
+	double L_inf(MatrixXd x);
+	MatrixXd L_inf_prox(MatrixXd x, double mu);
+	double Nuclear(MatrixXd x);
+	MatrixXd Nuclear_prox(MatrixXd x, double mu);
+	double GLasso(MatrixXd x, VectorXd w);
+	MatrixXd GLasso_prox(MatrixXd x, VectorXd w, double mu);
+	double Log_barrier(MatrixXd x);
+	MatrixXd Log_barrier_prox(MatrixXd x, double mu);
+	double Elastic(MatrixXd x, double alpha);
+	MatrixXd Elastic_prox(MatrixXd x, double alpha, double mu);
+
+	MatrixXd Ind_L_0_prox(MatrixXd x, int R);
+	MatrixXd Ind_L_1_prox(MatrixXd x, double R);
+	MatrixXd Ind_L_F_prox(MatrixXd x, double R);
+	MatrixXd Ind_L_inf_prox(MatrixXd x, double R);
+	MatrixXd Ind_box_prox(MatrixXd x, MatrixXd L, MatrixXd U);
+	MatrixXd Ind_positive_prox(MatrixXd x);
+	MatrixXd Ind_negative_prox(MatrixXd x);
+	MatrixXd Ind_half_prox(MatrixXd x, MatrixXd A, double alpha);
+	MatrixXd Ind_affine_prox(MatrixXd x, MatrixXd A, MatrixXd b);
+	MatrixXd Ind_nuclear_prox(MatrixXd x, double R);
+	MatrixXd Ind_psd_prox(MatrixXd x);
+	MatrixXd Ind_rank_prox(MatrixXd x, int R);
+};
+
+class Result
+{// ResultÀàÓÃÀ´·µ»Ø×îºóµÄ¼ÆËã½á¹û£¬ÆäÄÚÈİ°üÀ¨×îÓÅµÄx£¬º¯ÊıµÄ×îĞ¡ÖµÒÔ¼°µü´ú´ÎÊı¡££¨Õâ¸öÀà»¹Ã»ÓĞ¿ªÊ¼Ğ´£©
+public:
+	Result(int iter, MatrixXd x, double min_value);
+	Result();
+	~Result();
+	void show();// showÓÃÀ´Õ¹Ê¾¼ÆËã½á¹û£¬Ä¿Ç°´òËãÕ¹Ê¾iterºÍmin_value
+	MatrixXd min_point();
+	double min_loss();
+	int iterations();
+	int modify_iter(int iter);
+
+private:
+	MatrixXd x;// ×îÓÅµÄx
+	int iter;// µü´ú´ÎÊı
+	double min_value;// º¯ÊıµÄ×îĞ¡Öµ
+
+};
+
+Result ProxGD(int fmode, int hmode, int tmode, MatrixXd A, MatrixXd b, MatrixXd x0, double mu, double epsilon, double gamma, int M);
+// ÓÃÓÚ¼ÆËãf(x)+g(x)µÄ×îĞ¡Öµ£¬ÏêÏ¸½éÉÜ¼ûProxGD.cpp
+
+Result ProxGD_one_step(int fmode, int hmode, int tmode, MatrixXd A, MatrixXd b, MatrixXd x0, double mu, double epsilon, double gamma, int M);
+// ÓÃÓÚ¼ÆËãf(x)+g(x)µÄ×îĞ¡Öµ£¬ÏêÏ¸½éÉÜ¼ûProxGD.cpp
+
+/*
 double f(int fmode, MatrixXd A, MatrixXd b, MatrixXd x);
-// é—®é¢˜ä¸­çš„f(x)ï¼Œè¯¦ç»†ä»‹ç»è§f.cpp
+// ÎÊÌâÖĞµÄf(x)£¬ÏêÏ¸½éÉÜ¼ûf.cpp
 
 MatrixXd grad_f(int fmode, MatrixXd A, MatrixXd b, MatrixXd x);
-// é—®é¢˜ä¸­çš„f(x)çš„æ¢¯åº¦ï¼Œè¯¦ç»†ä»‹ç»è§f.cpp
+// ÎÊÌâÖĞµÄf(x)µÄÌİ¶È£¬ÏêÏ¸½éÉÜ¼ûf.cpp
+*/
 
 double h(int fmode, MatrixXd x);
-// é—®é¢˜ä¸­çš„h(x)ï¼Œè¯¦ç»†ä»‹ç»è§h.cpp
+// ÎÊÌâÖĞµÄh(x)£¬ÏêÏ¸½éÉÜ¼ûh.cpp
 
 MatrixXd prox_h(int hmode, double mu, MatrixXd x);
-// é—®é¢˜ä¸­çš„h(x)çš„æ¢¯åº¦ï¼Œè¯¦ç»†ä»‹ç»è§h.cpp
+// ÎÊÌâÖĞµÄh(x)µÄÌİ¶È£¬ÏêÏ¸½éÉÜ¼ûh.cpp
 
-double line_search(int fmode, int tmode, MatrixXd A, MatrixXd b, MatrixXd x, double gamma, int n, ...);
-// çº¿æœç´¢å‡½æ•°ï¼Œç”¨äºå†³å®šç®—æ³•ä¸­çš„æ­¥é•¿tï¼Œè¯¦ç»†ä»‹ç»è§line_search.cpp
+double line_search(Objective& f_obj, int tmode, MatrixXd x, double gamma, int n, ...);
+// ÏßËÑË÷º¯Êı£¬ÓÃÓÚ¾ö¶¨Ëã·¨ÖĞµÄ²½³¤t£¬ÏêÏ¸½éÉÜ¼ûline_search.cpp
