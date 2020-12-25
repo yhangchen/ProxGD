@@ -2,66 +2,150 @@
 #include <Eigen/Dense>
 #include <cfloat>
 #include "ProxGD.h"
+#include <string>
 using namespace Eigen;
 using namespace std;
 class Penalty
 {
 private:
-    MatrixXd L1_soft(MatrixXd x, double mu);
+    MatrixXd L1_soft(MatrixXd x, double mu0);
+    double mu, alpha, R;
+    int R0;
+    string mode;
+    VectorXd w;
+    MatrixXd A, b, L, U;
 
 public:
+    double h(MatrixXd x);
+    MatrixXd prox_h(MatrixXd x);
     int is_positive(MatrixXd x);
     double L_0(MatrixXd x);
-    MatrixXd L_0_prox(MatrixXd x, double mu);
+    MatrixXd L_0_prox(MatrixXd x);
     double L_1(MatrixXd x);
-    MatrixXd L_1_prox(MatrixXd x, double mu);
+    MatrixXd L_1_prox(MatrixXd x);
     double L_2(MatrixXd x);
-    MatrixXd L_2_prox(MatrixXd x, double mu);
+    MatrixXd L_2_prox(MatrixXd x);
     double L_12(MatrixXd x);
-    MatrixXd L_12_prox(MatrixXd x, double mu);
+    MatrixXd L_12_prox(MatrixXd x);
     double L_21(MatrixXd x);
-    MatrixXd L_21_prox(MatrixXd x, double mu);
+    MatrixXd L_21_prox(MatrixXd x);
     double L_inf(MatrixXd x);
-    MatrixXd L_inf_prox(MatrixXd x, double mu);
+    MatrixXd L_inf_prox(MatrixXd x);
     double Nuclear(MatrixXd x);
-    MatrixXd Nuclear_prox(MatrixXd x, double mu);
-    double GLasso(MatrixXd x, VectorXd w);
-    MatrixXd GLasso_prox(MatrixXd x, VectorXd w, double mu);
+    MatrixXd Nuclear_prox(MatrixXd x);
+    double GLasso(MatrixXd x);
+    MatrixXd GLasso_prox(MatrixXd x);
     double Log_barrier(MatrixXd x);
-    MatrixXd Log_barrier_prox(MatrixXd x, double mu);
-    double Elastic(MatrixXd x, double alpha);
-    MatrixXd Elastic_prox(MatrixXd x, double alpha, double mu);
+    MatrixXd Log_barrier_prox(MatrixXd x);
+    double Elastic(MatrixXd x);
+    MatrixXd Elastic_prox(MatrixXd x);
 
-    MatrixXd Ind_L_0_prox(MatrixXd x, int R);
-    MatrixXd Ind_L_1_prox(MatrixXd x, double R);
-    MatrixXd Ind_L_F_prox(MatrixXd x, double R);
-    MatrixXd Ind_L_inf_prox(MatrixXd x, double R);
-    MatrixXd Ind_box_prox(MatrixXd x, MatrixXd L, MatrixXd U);
+    MatrixXd Ind_L_0_prox(MatrixXd x);
+    MatrixXd Ind_L_1_prox(MatrixXd x);
+    MatrixXd Ind_L_F_prox(MatrixXd x);
+    MatrixXd Ind_L_inf_prox(MatrixXd x);
+    MatrixXd Ind_box_prox(MatrixXd x);
     MatrixXd Ind_positive_prox(MatrixXd x);
     MatrixXd Ind_negative_prox(MatrixXd x);
-    MatrixXd Ind_half_prox(MatrixXd x, MatrixXd A, double alpha);
-    MatrixXd Ind_affine_prox(MatrixXd x, MatrixXd A, MatrixXd b);
-    MatrixXd Ind_nuclear_prox(MatrixXd x, double R);
+    MatrixXd Ind_half_prox(MatrixXd x);
+    MatrixXd Ind_affine_prox(MatrixXd x);
+    MatrixXd Ind_nuclear_prox(MatrixXd x);
     MatrixXd Ind_psd_prox(MatrixXd x);
-    MatrixXd Ind_rank_prox(MatrixXd x, int R);
+    MatrixXd Ind_rank_prox(MatrixXd x);
 };
 
-MatrixXd Penalty::L1_soft(MatrixXd x, double mu)
+double Penalty::h(MatrixXd x)
 {
-    return (x.array().sign() * (x.array().abs() - mu).max(0)).matrix();
+    if (mode == "L_0")
+        return L_0(x);
+    else if (mode == "L_1")
+        return L_1(x);
+    else if (mode == "L_2")
+        return L_2(x);
+    else if (mode == "L_12")
+        return L_12(x);
+    else if (mode == "L_21")
+        return L_21(x);
+    else if (mode == "L_inf")
+        return L_inf(x);
+    else if (mode == "Nuclear")
+        return Nuclear(x);
+    else if (mode == "Log_barrier")
+        return Log_barrier(x);
+    else if (mode == "Elastic")
+        return Elastic(x);
+    else if (mode == "GLasso")
+        return GLasso(x);
+    else
+        throw "incorrect objective function.";
 }
 
-MatrixXd Penalty::Ind_L_0_prox(MatrixXd x, int R)
+MatrixXd Penalty::prox_h(MatrixXd x)
+{
+    if (mode == "L_0")
+        return L_0_prox(x);
+    else if (mode == "L_1")
+        return L_1_prox(x);
+    else if (mode == "L_2")
+        return L_2_prox(x);
+    else if (mode == "L_12")
+        return L_12_prox(x);
+    else if (mode == "L_21")
+        return L_21_prox(x);
+    else if (mode == "L_inf")
+        return L_inf_prox(x);
+    else if (mode == "Nuclear")
+        return Nuclear_prox(x);
+    else if (mode == "Log_barrier")
+        return Log_barrier_prox(x);
+    else if (mode == "Elastic")
+        return Elastic_prox(x);
+    else if (mode == "GLasso")
+        return GLasso_prox(x);
+    else if (mode == "Ind_L_0")
+        return Ind_L_0_prox(x);
+    else if (mode == "Ind_L_1")
+        return Ind_L_1_prox(x);
+    else if (mode == "Ind_L_F")
+        return Ind_L_F_prox(x);
+    else if (mode == "Ind_L_inf")
+        return Ind_L_inf_prox(x);
+    else if (mode == "Ind_box")
+        return Ind_box_prox(x);
+    else if (mode == "Ind_positive")
+        return Ind_positive_prox(x);
+    else if (mode == "Ind_negative")
+        return Ind_negative_prox(x);
+    else if (mode == "Ind_half")
+        return Ind_half_prox(x);
+    else if (mode == "Ind_affine")
+        return Ind_affine_prox(x);
+    else if (mode == "Ind_nuclear")
+        return Ind_nuclear_prox(x);
+    else if (mode == "Ind_psd")
+        return Ind_psd_prox(x);
+    else if (mode == "Ind_rank")
+        return Ind_rank_prox(x);
+    else
+        throw "incorrect Penalty function.";
+}
+
+MatrixXd Penalty::L1_soft(MatrixXd x, double mu0)
+{
+    return (x.array().sign() * (x.array().abs() - mu0).max(0)).matrix();
+}
+
+MatrixXd Penalty::Ind_L_0_prox(MatrixXd x)
 {
     MatrixXd x1 = x.cwiseAbs();
     Map<VectorXd> v(x1.data(), x1.size());
     std::sort(v.data(), v.data() + v.size());
-    double threshold = v(v.size() - R) - DBL_EPSILON;
+    double threshold = v(v.size() - R0) - DBL_EPSILON;
     ArrayXXd mask = (x.cwiseAbs().array() > threshold).cast<double>();
     return x.cwiseProduct(mask.matrix());
 }
 
-MatrixXd Penalty::Ind_L_1_prox(MatrixXd x, double R)
+MatrixXd Penalty::Ind_L_1_prox(MatrixXd x)
 {
     double l1 = x.cwiseAbs().sum();
     double linf = x.cwiseAbs().maxCoeff();
@@ -89,17 +173,17 @@ MatrixXd Penalty::Ind_L_1_prox(MatrixXd x, double R)
     return Penalty::L1_soft(x, m);
 }
 
-MatrixXd Penalty::Ind_L_F_prox(MatrixXd x, double R)
+MatrixXd Penalty::Ind_L_F_prox(MatrixXd x)
 {
     return x * min(1.0, R / x.norm());
 }
 
-MatrixXd Penalty::Ind_L_inf_prox(MatrixXd x, double R)
+MatrixXd Penalty::Ind_L_inf_prox(MatrixXd x)
 {
     return x.array().max(-R).min(R).matrix();
 }
 
-MatrixXd Penalty::Ind_box_prox(MatrixXd x, MatrixXd L, MatrixXd U)
+MatrixXd Penalty::Ind_box_prox(MatrixXd x)
 {
     assert(L.rows() == x.rows());
     assert(L.cols() == x.cols());
@@ -118,7 +202,7 @@ MatrixXd Penalty::Ind_negative_prox(MatrixXd x)
     return x.array().min(0).matrix();
 }
 
-MatrixXd Penalty::Ind_half_prox(MatrixXd x, MatrixXd A, double alpha)
+MatrixXd Penalty::Ind_half_prox(MatrixXd x)
 {
     assert(A.rows() == x.rows());
     assert(A.cols() == x.cols());
@@ -127,7 +211,7 @@ MatrixXd Penalty::Ind_half_prox(MatrixXd x, MatrixXd A, double alpha)
     return x - A / A.norm() * (x1.dot(a) - alpha);
 }
 
-MatrixXd Penalty::Ind_affine_prox(MatrixXd x, MatrixXd A, MatrixXd b)
+MatrixXd Penalty::Ind_affine_prox(MatrixXd x)
 {
     int n = x.rows(), r = x.cols(), m = A.rows();
     assert(A.cols() == n * r);
@@ -141,11 +225,11 @@ MatrixXd Penalty::Ind_affine_prox(MatrixXd x, MatrixXd A, MatrixXd b)
     return Result;
 }
 
-MatrixXd Penalty::Ind_nuclear_prox(MatrixXd x, double R)
+MatrixXd Penalty::Ind_nuclear_prox(MatrixXd x)
 {
     MatrixXd result = x;
     JacobiSVD<MatrixXd> svd(x, ComputeThinU | ComputeThinV);
-    result = svd.matrixU() * Penalty::Ind_L_1_prox(svd.singularValues(), R).asDiagonal() * svd.matrixV().transpose();
+    result = svd.matrixU() * Penalty::Ind_L_1_prox(svd.singularValues()).asDiagonal() * svd.matrixV().transpose();
     return result;
 }
 
@@ -158,10 +242,10 @@ MatrixXd Penalty::Ind_psd_prox(MatrixXd x)
     return result;
 }
 
-MatrixXd Penalty::Ind_rank_prox(MatrixXd x, int R)
+MatrixXd Penalty::Ind_rank_prox(MatrixXd x)
 {
     JacobiSVD<MatrixXd> svd(x, ComputeThinU | ComputeThinV);
-    return svd.matrixU() * svd.singularValues().head(R).asDiagonal() * svd.matrixV().transpose();
+    return svd.matrixU() * svd.singularValues().head(R0).asDiagonal() * svd.matrixV().transpose();
 }
 
 double Penalty::L_12(MatrixXd x)
@@ -208,7 +292,7 @@ double Penalty::L_0(MatrixXd x)
     return result;
 }
 
-double Penalty::GLasso(MatrixXd x, VectorXd w)
+double Penalty::GLasso(MatrixXd x)
 {
     assert(w.size() == x.rows());
     double result = 0.0;
@@ -239,7 +323,7 @@ int Penalty::is_positive(MatrixXd x)
     return 0;
 }
 
-MatrixXd Penalty::L_12_prox(MatrixXd x, double mu)
+MatrixXd Penalty::L_12_prox(MatrixXd x)
 {
     MatrixXd result = x;
     for (int i = 0; i < x.rows(); i++)
@@ -254,7 +338,7 @@ MatrixXd Penalty::L_12_prox(MatrixXd x, double mu)
     return result;
 }
 
-MatrixXd Penalty::L_21_prox(MatrixXd x, double mu)
+MatrixXd Penalty::L_21_prox(MatrixXd x)
 {
     MatrixXd result = x;
     for (int i = 0; i < x.cols(); i++)
@@ -269,7 +353,7 @@ MatrixXd Penalty::L_21_prox(MatrixXd x, double mu)
     return result;
 }
 
-MatrixXd Penalty::Nuclear_prox(MatrixXd x, double mu)
+MatrixXd Penalty::Nuclear_prox(MatrixXd x)
 {
     MatrixXd result = x;
     JacobiSVD<MatrixXd> svd(x, ComputeThinU | ComputeThinV);
@@ -277,7 +361,7 @@ MatrixXd Penalty::Nuclear_prox(MatrixXd x, double mu)
     return result;
 }
 
-MatrixXd Penalty::L_0_prox(MatrixXd x, double mu)
+MatrixXd Penalty::L_0_prox(MatrixXd x)
 {
     MatrixXd result = x;
     assert(x.cols() == 1);
@@ -289,7 +373,7 @@ MatrixXd Penalty::L_0_prox(MatrixXd x, double mu)
     return result;
 }
 
-MatrixXd Penalty::L_inf_prox(MatrixXd x, double mu)
+MatrixXd Penalty::L_inf_prox(MatrixXd x)
 {
     assert(x.cols() == 1);
     // 确保是向量
@@ -328,7 +412,7 @@ MatrixXd Penalty::L_inf_prox(MatrixXd x, double mu)
     return result;
 }
 
-MatrixXd Penalty::GLasso_prox(MatrixXd x, VectorXd w, double mu)
+MatrixXd Penalty::GLasso_prox(MatrixXd x)
 {
     assert(w.size() == x.rows());
     MatrixXd result = x;
@@ -344,7 +428,7 @@ MatrixXd Penalty::GLasso_prox(MatrixXd x, VectorXd w, double mu)
     return result;
 }
 
-MatrixXd Penalty::Log_barrier_prox(MatrixXd x, double mu)
+MatrixXd Penalty::Log_barrier_prox(MatrixXd x)
 {
     ArrayXXd xray = x.array();
     return (xray + (xray * xray + 4 * mu).sqrt()).matrix() / 2.0;
@@ -362,13 +446,13 @@ double Penalty::L_2(MatrixXd x)
     return Penalty::L_21(x);
 }
 
-double Penalty::Elastic(MatrixXd x, double alpha)
+double Penalty::Elastic(MatrixXd x)
 {
     assert((0.0 <= alpha) && (alpha <= 1.0));
     return Penalty::L_12(x) * alpha + (1 - alpha) * x.squaredNorm() / 2.0;
 }
 
-MatrixXd Penalty::Elastic_prox(MatrixXd x, double alpha, double mu)
+MatrixXd Penalty::Elastic_prox(MatrixXd x)
 {
     assert((0.0 <= alpha) && (alpha <= 1.0));
     MatrixXd result = x;
@@ -385,16 +469,16 @@ MatrixXd Penalty::Elastic_prox(MatrixXd x, double alpha, double mu)
     return result;
 }
 
-MatrixXd Penalty::L_1_prox(MatrixXd x, double mu)
+MatrixXd Penalty::L_1_prox(MatrixXd x)
 {
     assert(x.cols() == 1);
-    return Penalty::L_12_prox(x, mu);
+    return Penalty::L_12_prox(x);
 }
 
-MatrixXd Penalty::L_2_prox(MatrixXd x, double mu)
+MatrixXd Penalty::L_2_prox(MatrixXd x)
 {
     assert(x.cols() == 1);
-    return Penalty::L_21_prox(x, mu);
+    return Penalty::L_21_prox(x);
 }
 
 int main()
