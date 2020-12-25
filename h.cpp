@@ -1,6 +1,7 @@
 #include <iostream>
 #include <Eigen/Dense>
 #include <cfloat>
+#include <stdarg.h>
 #include "ProxGD.h"
 #include <string>
 using namespace Eigen;
@@ -9,13 +10,14 @@ class Penalty
 {
 private:
     MatrixXd L1_soft(MatrixXd x, double mu0);
-    double mu, alpha, R;
+    double mu, alpha, R, constant;
     int R0;
     string mode;
     VectorXd w;
     MatrixXd A, b, L, U;
 
 public:
+    Penalty(string mode, int n, ...);
     double h(MatrixXd x);
     MatrixXd prox_h(MatrixXd x);
     int is_positive(MatrixXd x);
@@ -53,6 +55,52 @@ public:
     MatrixXd Ind_psd_prox(MatrixXd x);
     MatrixXd Ind_rank_prox(MatrixXd x);
 };
+
+Penalty::Penalty(string mode, int n, ...)
+{
+    if (mode.substr(0, 3) == "Ind")
+    {
+        if (n >= 1)
+        {
+            va_list args;
+            va_start(args, n);
+            if ((mode == "Ind_rank") || (mode == "Ind_L_0"))
+            {
+                int R0 = va_arg(args, int);
+            }
+            else if (mode == "Ind_box")
+            {
+                MatrixXd L = va_arg(args, MatrixXd);
+                MatrixXd U = va_arg(args, MatrixXd);
+            }
+            else if (mode == "Ind_affine")
+            {
+                MatrixXd A = va_arg(args, MatrixXd);
+                MatrixXd b = va_arg(args, MatrixXd);
+            }
+            else if (mode == "Ind_affine")
+            {
+                MatrixXd A = va_arg(args, MatrixXd);
+                double constant = va_arg(args, double);
+            }
+            else
+            {
+                double R = va_arg(args, double);
+            }
+        }
+    }
+    else
+    {
+        va_list args;
+        va_start(args, n);
+        double mu = va_arg(args, double);
+        if (mode == "Elastic")
+            double alpha = va_arg(args, double);
+        else if (mode == "GLasso")
+            VectorXd w = va_arg(args, VectorXd);
+        va_end(args);
+    }
+}
 
 double Penalty::h(MatrixXd x)
 {
@@ -208,7 +256,7 @@ MatrixXd Penalty::Ind_half_prox(MatrixXd x)
     assert(A.cols() == x.cols());
     Map<VectorXd> x1(x.data(), x.size());
     Map<VectorXd> a(A.data(), A.size());
-    return x - A / A.norm() * (x1.dot(a) - alpha);
+    return x - A / A.norm() * (x1.dot(a) - constant);
 }
 
 MatrixXd Penalty::Ind_affine_prox(MatrixXd x)
