@@ -95,20 +95,18 @@ Penalty::Penalty(string mode0, int n, ...)
     {
         va_list args;
         va_start(args, n);
-        cout << 1 << endl;
 
         double mu = va_arg(args, double);
         if (mode == "Elastic")
             double alpha = va_arg(args, double);
         else if (mode == "GLasso")
-            VectorXd w = va_arg(args, VectorXd);
+            w = va_arg(args, VectorXd);
         va_end(args);
     }
 }
 
 double Penalty::h(MatrixXd x)
 {
-    cout << mode << endl;
     if (mode == "L_0")
     {
         return L_0(x);
@@ -348,7 +346,7 @@ double Penalty::L_0(MatrixXd x)
 
 double Penalty::GLasso(MatrixXd x)
 {
-    assert(w.size() == x.rows());
+    assert(w.rows() == x.rows());
     double result = 0.0;
     for (int i = 0; i < x.rows(); i++)
     {
@@ -468,7 +466,7 @@ MatrixXd Penalty::L_inf_prox(MatrixXd x)
 
 MatrixXd Penalty::GLasso_prox(MatrixXd x)
 {
-    assert(w.size() == x.rows());
+    assert(w.rows() == x.rows());
     MatrixXd result = x;
     for (int i = 0; i < x.rows(); i++)
     {
@@ -538,7 +536,9 @@ MatrixXd Penalty::L_2_prox(MatrixXd x)
 int main()
 {
     MatrixXd x = MatrixXd::Random(3, 1);
-    Penalty p((string) "L_1", (double)0.1);
+    MatrixXd w = MatrixXd::Random(3, 1);
+
+    Penalty p((string) "GLasso", (double)0.1, w);
     cout << "Mat:" << endl
          << x << endl;
     cout << "Th:" << endl
