@@ -102,6 +102,6 @@ int main()
 
     cout
         << "Test:" << endl
-        << f.f(x) << endl;
+        << b(0) << endl;
     return 0;
 }

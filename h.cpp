@@ -1,5 +1,8 @@
 #include <iostream>
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
+#include <vector>
+
 #include <cfloat>
 #include <stdarg.h>
 // #include "ProxGD.h"
@@ -13,8 +16,7 @@ private:
     double mu, alpha, R, constant;
     int R0;
     string mode;
-    VectorXd w;
-    MatrixXd A, b, L, U, AAT;
+    MatrixXd D, A, b, L, U, AAT;
 
 public:
     Penalty(string mode, int n, ...);
@@ -41,11 +43,16 @@ public:
     MatrixXd Log_barrier_prox(MatrixXd x);
     double Elastic(MatrixXd x);
     MatrixXd Elastic_prox(MatrixXd x);
+    double TV_1D(MatrixXd x);
+    MatrixXd TV_1D_prox(MatrixXd x);
+    double TV_2D(MatrixXd x);
+    MatrixXd TV_2D_prox(MatrixXd x);
 
     MatrixXd Ind_L_0_prox(MatrixXd x);
     MatrixXd Ind_L_1_prox(MatrixXd x);
     MatrixXd Ind_L_F_prox(MatrixXd x);
     MatrixXd Ind_L_inf_prox(MatrixXd x);
+    MatrixXd Ind_L_inf_2_prox(MatrixXd x);
     MatrixXd Ind_box_prox(MatrixXd x);
     MatrixXd Ind_positive_prox(MatrixXd x);
     MatrixXd Ind_negative_prox(MatrixXd x);
@@ -100,7 +107,47 @@ Penalty::Penalty(string mode0, int n, ...)
         if (mode == "Elastic")
             double alpha = va_arg(args, double);
         else if (mode == "GLasso")
-            w = va_arg(args, VectorXd);
+            D = va_arg(args, MatrixXd);
+        else if (mode == "TV_1D")
+        {
+            int nrows = va_arg(args, int); // # of rows of input vector.
+            typedef Eigen::Triplet<int> T;
+            std::vector<T> tripletList;
+            tripletList.reserve((2 * nrows - 1) * sizeof(int));
+            for (int i = 0; i < nrows - 1; i++)
+            {
+                tripletList.push_back(T(i, i, 1));
+                tripletList.push_back(T(i, i + 1, -1));
+            }
+            Eigen::SparseMatrix<int> mat(nrows - 1, nrows);
+            mat.setFromTriplets(tripletList.begin(), tripletList.end());
+            D = mat;
+        }
+        else if (mode == "TV_2D")
+        {
+            int nrows = va_arg(args, int); // # of rows of input vector.
+            int ncols = va_arg(args, int); // # of cols of input vector.
+            typedef Eigen::Triplet<int> T;
+            std::vector<T> tripletList;
+            tripletList.reserve(2 * (2 * ncols * nrows - nrows - ncols) * sizeof(int));
+            for (int i = 0; i < nrows - 1; i++)
+            {
+                for (int j = 0; j < ncols; j++)
+                {
+                    tripletList.push_back(T(j * (nrows - 1) + i, j * (nrows) + i, 1));
+                    tripletList.push_back(T(j * (nrows - 1) + i, j * (nrows) + i + 1, -1));
+                }
+            }
+            int tmp = ncols * (nrows - 1);
+            for (int i = 0; i < nrows * (ncols - 1); i++)
+            {
+                tripletList.push_back(T(tmp + i, i, 1));
+                tripletList.push_back(T(tmp + i, i + nrows, 1));
+            }
+            Eigen::SparseMatrix<int> mat(2 * ncols * nrows - nrows - ncols, ncols * nrows);
+            mat.setFromTriplets(tripletList.begin(), tripletList.end());
+            D = mat;
+        }
         va_end(args);
     }
 }
@@ -129,6 +176,11 @@ double Penalty::h(MatrixXd x)
         return Elastic(x);
     else if (mode == "GLasso")
         return GLasso(x);
+    else if (mode == "TV_1D")
+        return TV_1D(x);
+    else if (mode == "TV_2D")
+        return TV_2D(x);
+
     else
         throw "incorrect objective function.";
 }
@@ -155,6 +207,10 @@ MatrixXd Penalty::prox_h(MatrixXd x)
         return Elastic_prox(x);
     else if (mode == "GLasso")
         return GLasso_prox(x);
+    else if (mode == "TV_1D")
+        return TV_1D_prox(x);
+    else if (mode == "TV_2D")
+        return TV_2D_prox(x);
     else if (mode == "Ind_L_0")
         return Ind_L_0_prox(x);
     else if (mode == "Ind_L_1")
@@ -234,6 +290,13 @@ MatrixXd Penalty::Ind_L_F_prox(MatrixXd x)
 MatrixXd Penalty::Ind_L_inf_prox(MatrixXd x)
 {
     return x.array().max(-R).min(R).matrix();
+}
+MatrixXd Penalty::Ind_L_inf_2_prox(MatrixXd x)
+{
+    int n = x.rows();
+    for (int i = 0; i < n; i++)
+        x.row(i) /= min(1.0, R / x.row(i).norm());
+    return x;
 }
 
 MatrixXd Penalty::Ind_box_prox(MatrixXd x)
@@ -346,11 +409,12 @@ double Penalty::L_0(MatrixXd x)
 
 double Penalty::GLasso(MatrixXd x)
 {
-    assert(w.rows() == x.rows());
+    assert(D.cols() == x.rows());
+    MatrixXd y = D * x;
     double result = 0.0;
-    for (int i = 0; i < x.rows(); i++)
+    for (int i = 0; i < y.rows(); i++)
     {
-        result += x.row(i).norm() * w(i);
+        result += y.row(i).norm();
     }
     return result;
 }
@@ -373,6 +437,30 @@ int Penalty::is_positive(MatrixXd x)
         }
     }
     return 0;
+}
+
+double Penalty::TV_1D(MatrixXd x)
+{
+    assert(x.cols() == 1);
+    return Penalty::GLasso(x);
+}
+
+double Penalty::TV_2D(MatrixXd x)
+{
+    Map<VectorXd> v(x.data(), x.size());
+    return Penalty::GLasso(v);
+}
+
+MatrixXd Penalty::TV_1D_prox(MatrixXd x)
+{
+    assert(x.cols() == 1);
+    return Penalty::GLasso_prox(x);
+}
+
+MatrixXd Penalty::TV_2D_prox(MatrixXd x)
+{
+    Map<VectorXd> v(x.data(), x.size());
+    return Penalty::GLasso_prox(v);
 }
 
 MatrixXd Penalty::L_12_prox(MatrixXd x)
@@ -466,18 +554,9 @@ MatrixXd Penalty::L_inf_prox(MatrixXd x)
 
 MatrixXd Penalty::GLasso_prox(MatrixXd x)
 {
-    assert(w.rows() == x.rows());
-    MatrixXd result = x;
-    for (int i = 0; i < x.rows(); i++)
-    {
-        if (x.row(i).norm() < DBL_EPSILON)
-        {
-            result.row(i) *= 0;
-        }
-        double flag = 1 - mu * w(i) / x.row(i).norm();
-        result.row(i) *= max(flag, 0.0);
-    }
-    return result;
+    assert(D.cols() == x.rows());
+    MatrixXd W = ProxGD();
+    return x + D.transpose() * W;
 }
 
 MatrixXd Penalty::Log_barrier_prox(MatrixXd x)
