@@ -4,33 +4,40 @@
 #include <math.h>
 using namespace Eigen;
 using namespace std;
-class Result
-{
-public:
-    Result();
-    ~Result();
-    void show(); // show用来展示计算结果，目前打算展示iter和min_value
-    MatrixXf min_point();
 
-private:
-    MatrixXf x;       // 最优的x
-    int iter;         // 迭代次数
-    double min_value; // 函数的最小值
-};
+Result::Result(int iter, MatrixXd x, double min_value) :x(x), iter(iter), min_value(min_value) {};
+// This is the constructor. It can initialize every memeber variable.
 
-Result::Result()
-{
-}
+Result::Result() {};
 
-Result::~Result()
-{
-}
+Result::~Result() {};
 
 void Result::show()
 {
+	cout << "min point" << endl;
+	cout << x << endl;
+	cout << "iterations: " << iter << endl;
+	cout << "min value: " << min_value << endl;
+	// This function can show each member variable.
 }
 
-MatrixXf Result::min_point()
+MatrixXd Result::min_point()
 {
-    return MatrixXf();
+	return x;// This function can return the optimal point.
+}
+
+double Result::min_loss()
+{
+	return min_value;// This function can return the optimal value.
+}
+
+int Result::iterations()
+{
+	return iter;// This function can return the time of iterations.
+}
+
+int Result::modify_iter(int k)
+{
+	iter = k;
+	return k;// Modify the iter to k.
 }
