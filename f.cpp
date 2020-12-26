@@ -95,13 +95,13 @@ int Objective::check(MatrixXd x)
 
 int main()
 {
-    MatrixXd A = MatrixXd::Random(3, 3);
-    MatrixXd b = MatrixXd::Random(3, 1);
-    MatrixXd x = MatrixXd::Random(3, 1);
-    Objective f((string) "Logistic", A, b);
+    MatrixXd A;
+    // MatrixXd b = MatrixXd::Random(3, 1);
+    // MatrixXd x = MatrixXd::Random(3, 1);
+    // Objective f((string) "Logistic", A, b);
 
     cout
         << "Test:" << endl
-        << b(0) << endl;
+        << A.size() << endl;
     return 0;
 }

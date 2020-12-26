@@ -17,6 +17,7 @@ private:
     int R0;
     string mode;
     MatrixXd D, A, b, L, U, AAT;
+    SparseMatrix<int> D_sp;
 
 public:
     Penalty(string mode, int n, ...);
@@ -121,7 +122,7 @@ Penalty::Penalty(string mode0, int n, ...)
             }
             Eigen::SparseMatrix<int> mat(nrows - 1, nrows);
             mat.setFromTriplets(tripletList.begin(), tripletList.end());
-            D = mat;
+            D_sp = mat;
         }
         else if (mode == "TV_2D")
         {
@@ -146,7 +147,7 @@ Penalty::Penalty(string mode0, int n, ...)
             }
             Eigen::SparseMatrix<int> mat(2 * ncols * nrows - nrows - ncols, ncols * nrows);
             mat.setFromTriplets(tripletList.begin(), tripletList.end());
-            D = mat;
+            D_sp = mat;
         }
         va_end(args);
     }
@@ -219,6 +220,8 @@ MatrixXd Penalty::prox_h(MatrixXd x)
         return Ind_L_F_prox(x);
     else if (mode == "Ind_L_inf")
         return Ind_L_inf_prox(x);
+    else if (mode == "Ind_L_inf_2")
+        return Ind_L_inf_2_prox(x);
     else if (mode == "Ind_box")
         return Ind_box_prox(x);
     else if (mode == "Ind_positive")
@@ -409,8 +412,18 @@ double Penalty::L_0(MatrixXd x)
 
 double Penalty::GLasso(MatrixXd x)
 {
-    assert(D.cols() == x.rows());
-    MatrixXd y = D * x;
+    MatrixXd y;
+    if (D.size() > 0)
+    {
+        assert(D.cols() == x.rows());
+        y = D * x;
+    }
+    else
+    {
+        assert(D_sp.cols() == x.rows());
+        y = D_sp * x;
+    }
+
     double result = 0.0;
     for (int i = 0; i < y.rows(); i++)
     {
@@ -516,27 +529,26 @@ MatrixXd Penalty::L_0_prox(MatrixXd x)
 MatrixXd Penalty::L_inf_prox(MatrixXd x)
 {
     assert(x.cols() == 1);
-    // 确保是向量
     MatrixXd result = x;
     MatrixXd x_abs(x.size() + 1, 1);
     x_abs << x.cwiseAbs(), 0;
     sort(x_abs.data(), x_abs.data() + x_abs.size(), greater<double>());
-    // 首先将各元素绝对值按照大小排序，并在结尾补0
+    // rearrange from highest to lowest, add zeros in the end
     double t = 0;
-    // 然后需要确定t，见上机报告(20)式
+    // see the report for determining t.
     double cum = 0;
     int i = 0;
     for (i = 0; (i < x_abs.size() - 1) && (cum < mu); i++)
     {
         cum += (i + 1) * (x_abs(i) - x_abs(i + 1));
     }
-    // 确定t所在的区间为[x_abs(i - 1), x_abs(i)]
+    // t in [x_abs(i - 1), x_abs(i)]
     if (cum < mu)
     {
-        return 0 * result; // 如果mu大于x的l_1范数，直接返回0向量
+        return 0 * result; //
     }
     t = x_abs(i) + (cum - mu) / i;
-    // 计算t的值
+    // obtain t
     for (int i = 0; i < x.size(); i++)
     {
         if (x(i) > t)
@@ -548,15 +560,23 @@ MatrixXd Penalty::L_inf_prox(MatrixXd x)
             result(i, 0) = -t;
         }
     }
-    // 修改x的值
     return result;
 }
 
 MatrixXd Penalty::GLasso_prox(MatrixXd x)
 {
-    assert(D.cols() == x.rows());
-    MatrixXd W = ProxGD();
-    return x + D.transpose() * W;
+    if (D.size() > 0)
+    {
+        assert(D.cols() == x.rows());
+        MatrixXd W = ProxGD("Frob", "Ind_L_inf_2", "BB", D.transpose(), -x, x, mu).min_point();
+        return x + D.transpose() * W;
+    }
+    else
+    {
+        assert(D_sp.cols() == x.rows());
+        MatrixXd W = ProxGD("Frob", "Ind_L_inf_2", "BB", D_sp.transpose(), -x, x, mu).min_point();
+        return x + D_sp.transpose() * W;
+    }
 }
 
 MatrixXd Penalty::Log_barrier_prox(MatrixXd x)
