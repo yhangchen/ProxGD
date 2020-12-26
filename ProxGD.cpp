@@ -1,11 +1,11 @@
 #include <iostream>
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
 #include "ProxGD.h"
 #include <math.h>
-#include<assert.h>
+#include <assert.h>
 using namespace Eigen;
 using namespace std;
-
 
 Result ProxGD(string fmode, string hmode, string tmode, MatrixXd A, MatrixXd b, MatrixXd x0, double mu, double epsilon, double gamma, int M)
 {
@@ -75,19 +75,18 @@ Result ProxGD_one_step(string fmode, string hmode, string tmode, MatrixXd A, Mat
 		// Then, we need to calculate x_star.
 
 		prev_x = new_x;
-		new_x = prox_h(hmode, t * mu, x_star);// Here, we use prox_h to calculate new x.
+		new_x = prox_h(hmode, t * mu, x_star); // Here, we use prox_h to calculate new x.
 		delta_x = new_x - prev_x;
 		// Update prev_x after updating new_x. Update delta_x at last.
 
 		iter = iter + 1;
 		// Update the iteration times.
 
-		fhs[iter % M] = f_obj.f(new_x) + mu * h(hmode, new_x);;
+		fhs[iter % M] = f_obj.f(new_x) + mu * h(hmode, new_x);
+		;
 		// Update the function value.
-
 	}
 
 	Result res(iter, new_x, fhs[iter % M]);
 	return res;
 }
-
