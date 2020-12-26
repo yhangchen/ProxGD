@@ -2,7 +2,7 @@
 #include <Eigen/Dense>
 #include "ProxGD.h"
 #include <math.h>
-#include<assert.h>
+#include <assert.h>
 using namespace Eigen;
 using namespace std;
 

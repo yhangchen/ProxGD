@@ -5,64 +5,10 @@
 
 #include <cfloat>
 #include <stdarg.h>
-// #include "ProxGD.h"
+#include "ProxGD.h"
 #include <string>
 using namespace Eigen;
 using namespace std;
-class Penalty
-{
-private:
-    MatrixXd L1_soft(MatrixXd x, double mu0);
-    double mu, alpha, R, constant;
-    int R0;
-    string mode;
-    MatrixXd D, A, b, L, U, AAT;
-    SparseMatrix<int> D_sp;
-
-public:
-    Penalty(string mode, int n, ...);
-    double h(MatrixXd x);
-    MatrixXd prox_h(MatrixXd x);
-    int is_positive(MatrixXd x);
-    double L_0(MatrixXd x);
-    MatrixXd L_0_prox(MatrixXd x);
-    double L_1(MatrixXd x);
-    MatrixXd L_1_prox(MatrixXd x);
-    double L_2(MatrixXd x);
-    MatrixXd L_2_prox(MatrixXd x);
-    double L_12(MatrixXd x);
-    MatrixXd L_12_prox(MatrixXd x);
-    double L_21(MatrixXd x);
-    MatrixXd L_21_prox(MatrixXd x);
-    double L_inf(MatrixXd x);
-    MatrixXd L_inf_prox(MatrixXd x);
-    double Nuclear(MatrixXd x);
-    MatrixXd Nuclear_prox(MatrixXd x);
-    double GLasso(MatrixXd x);
-    MatrixXd GLasso_prox(MatrixXd x);
-    double Log_barrier(MatrixXd x);
-    MatrixXd Log_barrier_prox(MatrixXd x);
-    double Elastic(MatrixXd x);
-    MatrixXd Elastic_prox(MatrixXd x);
-    double TV_1D(MatrixXd x);
-    MatrixXd TV_1D_prox(MatrixXd x);
-    double TV_2D(MatrixXd x);
-    MatrixXd TV_2D_prox(MatrixXd x);
-
-    MatrixXd Ind_L_0_prox(MatrixXd x);
-    MatrixXd Ind_L_1_prox(MatrixXd x);
-    MatrixXd Ind_L_F_prox(MatrixXd x);
-    MatrixXd Ind_L_inf_prox(MatrixXd x);
-    MatrixXd Ind_L_inf_2_prox(MatrixXd x);
-    MatrixXd Ind_box_prox(MatrixXd x);
-    MatrixXd Ind_positive_prox(MatrixXd x);
-    MatrixXd Ind_negative_prox(MatrixXd x);
-    MatrixXd Ind_half_prox(MatrixXd x);
-    MatrixXd Ind_affine_prox(MatrixXd x);
-    MatrixXd Ind_nuclear_prox(MatrixXd x);
-    MatrixXd Ind_psd_prox(MatrixXd x);
-    MatrixXd Ind_rank_prox(MatrixXd x);
-};
 
 Penalty::Penalty(string mode0, int n, ...)
 {
