@@ -239,7 +239,7 @@ MatrixXd Penalty::Ind_L_F_prox(MatrixXd x)
 
 MatrixXd Penalty::Ind_L_inf_prox(MatrixXd x)
 {
-    return x.array().max(-R).min(R).matrix();
+    return x.cwiseMax(-R).cwiseMin(R);
 }
 MatrixXd Penalty::Ind_L_inf_2_prox(MatrixXd x)
 {
@@ -255,17 +255,17 @@ MatrixXd Penalty::Ind_box_prox(MatrixXd x)
     assert(L.cols() == x.cols());
     assert(U.rows() == x.rows());
     assert(U.cols() == x.cols());
-    return (x.array().max(L.array()).min(U.array())).matrix();
+    return x.cwiseMax(L).cwiseMin(U);
 }
 
 MatrixXd Penalty::Ind_positive_prox(MatrixXd x)
 {
-    return x.array().max(0).matrix();
+    return x.cwiseMax(0);
 }
 
 MatrixXd Penalty::Ind_negative_prox(MatrixXd x)
 {
-    return x.array().min(0).matrix();
+    return x.cwiseMin(0);
 }
 
 MatrixXd Penalty::Ind_half_prox(MatrixXd x)
@@ -286,8 +286,8 @@ MatrixXd Penalty::Ind_affine_prox(MatrixXd x)
     VectorXd result = A * v - b;
     result = AAT.ldlt().solve(result);
     result = v - A.transpose() * result;
-    Map<MatrixXd> Result(result.data(), x.rows(), x.cols());
-    return Result;
+    Map<MatrixXd> mat_result(result.data(), x.rows(), x.cols());
+    return mat_result;
 }
 
 MatrixXd Penalty::Ind_nuclear_prox(MatrixXd x)
