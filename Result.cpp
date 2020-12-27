@@ -1,16 +1,18 @@
 #include <iostream>
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
+
 #include "ProxGD.h"
 #include <math.h>
 using namespace Eigen;
 using namespace std;
 
-Result::Result(int iter, MatrixXd x, double min_value) :x(x), iter(iter), min_value(min_value) {};
+Result::Result(int iter, MatrixXd x, double min_value) : x(x), iter(iter), min_value(min_value){};
 // This is the constructor. It can initialize every memeber variable.
 
-Result::Result() {};
+// Result::Result(){};
 
-Result::~Result() {};
+// Result::~Result(){};
 
 void Result::show()
 {
@@ -23,21 +25,27 @@ void Result::show()
 
 MatrixXd Result::min_point()
 {
-	return x;// This function can return the optimal point.
+	return x; // This function can return the optimal point.
 }
 
 double Result::min_loss()
 {
-	return min_value;// This function can return the optimal value.
+	return min_value; // This function can return the optimal value.
 }
 
 int Result::iterations()
 {
-	return iter;// This function can return the time of iterations.
+	return iter; // This function can return the time of iterations.
 }
 
 int Result::modify_iter(int k)
 {
 	iter = k;
-	return k;// Modify the iter to k.
+	return k; // Modify the iter to k.
+}
+
+int main(int argc, char const *argv[])
+{
+	/* code */
+	return 0;
 }

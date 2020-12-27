@@ -28,12 +28,12 @@ private:
 	int R0;
 	string mode;
 	MatrixXd D, A, b, L, U, AAT;
-	SparseMatrix<int> D_sp;
+	SparseMatrix<double> D_sp;
 
 public:
 	Penalty(string mode, int n, ...);
 	double h(MatrixXd x);
-	MatrixXd prox_h(MatrixXd x);
+	MatrixXd prox_h(MatrixXd x, double new_mu);
 	int is_positive(MatrixXd x);
 	double L_0(MatrixXd x);
 	MatrixXd L_0_prox(MatrixXd x);
@@ -79,8 +79,8 @@ class Result
 { // This class is used to store and show the result. See Result.cpp.
 public:
 	Result(int iter, MatrixXd x, double min_value);
-	Result();
-	~Result();
+	// Result();
+	// ~Result();
 	void show(); // Show the result.
 	MatrixXd min_point();
 	double min_loss();
@@ -98,12 +98,6 @@ Result ProxGD(string fmode, string hmode, string tmode, MatrixXd A, MatrixXd b, 
 
 Result ProxGD_one_step(string fmode, string hmode, string tmode, MatrixXd A, MatrixXd b, MatrixXd x0, double mu, double epsilon = 1e-6, double gamma = 0.5, int M = 2);
 // To calculate the minimum of f(x)+g(x). See ProxGD.cpp.
-
-double h(string fmode, MatrixXd x);
-// h function in the problem. See h.cpp.
-
-MatrixXd prox_h(string hmode, double mu, MatrixXd x);
-// h function in the problem. See h.cpp.
 
 double line_search(Objective &f_obj, string tmode, MatrixXd x, double gamma, int n, ...);
 // The function of line searching. It can decide the step size t. See line_search.cpp.

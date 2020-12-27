@@ -66,7 +66,7 @@ Penalty::Penalty(string mode0, int n, ...)
                 tripletList.push_back(T(i, i, 1));
                 tripletList.push_back(T(i, i + 1, -1));
             }
-            Eigen::SparseMatrix<int> mat(nrows - 1, nrows);
+            Eigen::SparseMatrix<double> mat(nrows - 1, nrows);
             mat.setFromTriplets(tripletList.begin(), tripletList.end());
             D_sp = mat;
         }
@@ -91,7 +91,7 @@ Penalty::Penalty(string mode0, int n, ...)
                 tripletList.push_back(T(tmp + i, i, 1));
                 tripletList.push_back(T(tmp + i, i + nrows, 1));
             }
-            Eigen::SparseMatrix<int> mat(2 * ncols * nrows - nrows - ncols, ncols * nrows);
+            Eigen::SparseMatrix<double> mat(2 * ncols * nrows - nrows - ncols, ncols * nrows);
             mat.setFromTriplets(tripletList.begin(), tripletList.end());
             D_sp = mat;
         }
@@ -132,8 +132,9 @@ double Penalty::h(MatrixXd x)
         throw "incorrect objective function.";
 }
 
-MatrixXd Penalty::prox_h(MatrixXd x)
+MatrixXd Penalty::prox_h(MatrixXd x, double new_mu)
 {
+    mu = new_mu;
     if (mode == "L_0")
         return L_0_prox(x);
     else if (mode == "L_1")
@@ -419,7 +420,9 @@ MatrixXd Penalty::TV_1D_prox(MatrixXd x)
 MatrixXd Penalty::TV_2D_prox(MatrixXd x)
 {
     Map<VectorXd> v(x.data(), x.size());
-    return Penalty::GLasso_prox(v);
+    MatrixXd result = Penalty::GLasso_prox(v);
+    Map<MatrixXd> result_new(result.data(), x.rows(), x.cols());
+    return result_new;
 }
 
 MatrixXd Penalty::L_12_prox(MatrixXd x)
@@ -511,19 +514,21 @@ MatrixXd Penalty::L_inf_prox(MatrixXd x)
 
 MatrixXd Penalty::GLasso_prox(MatrixXd x)
 {
-    if (D.size() > 0)
-    {
-        assert(D.cols() == x.rows());
-        MatrixXd W = ProxGD("Frob", "Ind_L_inf_2", "BB", D.transpose(), -x, x, mu).min_point();
-        return x + D.transpose() * W;
-    }
-    else
-    {
-        assert(D_sp.cols() == x.rows());
-        MatrixXd W = ProxGD("Frob", "Ind_L_inf_2", "BB", D_sp.transpose(), -x, x, mu).min_point();
-        return x + D_sp.transpose() * W;
-    }
+    // if (D.size() > 0)
+    // {
+    assert(D.cols() == x.rows());
+    Result W = ProxGD((string) "Frob", (string) "Ind_L_inf_2", (string) "BB", D.transpose(), -x, x, mu);
+    MatrixXd W0 = W.min_point();
+    return x + D.transpose() * W0;
+    // }
 }
+// else
+// {
+//     assert(D_sp.cols() == x.rows());
+//     Result W = ProxGD("Frob", "Ind_L_inf_2", "BB", D_sp.transpose(), -x, x, mu);
+//     MatrixXd W0 = W.min_point();
+//     return x + D_sp.transpose() * W0;
+// }
 
 MatrixXd Penalty::Log_barrier_prox(MatrixXd x)
 {

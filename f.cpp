@@ -1,62 +1,31 @@
 #include <iostream>
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
 #include "ProxGD.h"
 #include <math.h>
 #include <assert.h>
 using namespace Eigen;
 using namespace std;
 
-class Objective
-{
-public:
-	Objective(string mode, MatrixXd A, MatrixXd b);
-	double f(MatrixXd x);
-	MatrixXd grad_f(MatrixXd x);
-	double Frob(MatrixXd x);
-	MatrixXd Frob_grad(MatrixXd x);
-	double Logistic(MatrixXd x);
-	MatrixXd Logistic_grad(MatrixXd x);
-	int check(MatrixXd x);
-
-private:
-	string mode;
-	MatrixXd A;
-	MatrixXd b;
-};
-
 Objective::Objective(string mode, MatrixXd A, MatrixXd b) : mode(mode), A(A), b(b){};
 
 double Objective::f(MatrixXd x)
 {
 	if (mode == "Frob")
-	{
 		return Frob(x);
-	}
 	else if (mode == "Log")
-	{
 		return Logistic(x);
-	}
 	else
-	{
-		cout << "Unknown mode!" << endl;
-		return 0;
-	}
+		throw "Unknown mode!";
 }
 MatrixXd Objective::grad_f(MatrixXd x)
 {
 	if (mode == "Frob")
-	{
 		return Frob_grad(x);
-	}
 	else if (mode == "Log")
-	{
 		return Logistic_grad(x);
-	}
 	else
-	{
-		cout << "Unknown mode!" << endl;
-		return 0 * x;
-	}
+		throw "Unknown mode!";
 };
 
 double Objective::Frob(MatrixXd x)
@@ -90,8 +59,12 @@ int Objective::check(MatrixXd x)
 	int m = A.rows(),
 		r = A.cols(), r1 = x.rows(), n = x.cols(), m1 = b.rows(), n1 = b.cols();
 	if ((m != m1) || (r != r1) || (n != n1))
-	{
 		throw "Incompatible size.";
-	}
+	return 0;
+}
+
+int main(int argc, char const *argv[])
+{
+	/* code */
 	return 0;
 }
