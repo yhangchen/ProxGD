@@ -514,21 +514,21 @@ MatrixXd Penalty::L_inf_prox(MatrixXd x)
 
 MatrixXd Penalty::GLasso_prox(MatrixXd x)
 {
-    // if (D.size() > 0)
-    // {
-    assert(D.cols() == x.rows());
-    Result W = ProxGD((string) "Frob", (string) "Ind_L_inf_2", (string) "BB", D.transpose(), -x, x, mu);
-    MatrixXd W0 = W.min_point();
-    return x + D.transpose() * W0;
-    // }
+    if (D.size() > 0)
+    {
+        assert(D.cols() == x.rows());
+        Result W = ProxGD((string) "Frob", (string) "Ind_L_inf_2", (string) "BB", D.transpose(), -x, x, mu);
+        MatrixXd W0 = W.min_point();
+        return x + D.transpose() * W0;
+    }
+    else
+    {
+        assert(D_sp.cols() == x.rows());
+        Result W = ProxGD("Frob", "Ind_L_inf_2", "BB", D_sp.transpose(), -x, x, mu);
+        MatrixXd W0 = W.min_point();
+        return x + D_sp.transpose() * W0;
+    }
 }
-// else
-// {
-//     assert(D_sp.cols() == x.rows());
-//     Result W = ProxGD("Frob", "Ind_L_inf_2", "BB", D_sp.transpose(), -x, x, mu);
-//     MatrixXd W0 = W.min_point();
-//     return x + D_sp.transpose() * W0;
-// }
 
 MatrixXd Penalty::Log_barrier_prox(MatrixXd x)
 {
