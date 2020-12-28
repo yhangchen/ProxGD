@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <fstream>
 #include <sstream>
+#include <cstring>
 using namespace Eigen;
 using namespace std;
 
@@ -38,19 +39,23 @@ int main()
 	static default_random_engine e(1);
 	int m = 100;
 	int n = 100;
-	int r = 1;
+	int r = 2;
 
 	Eigen::MatrixXd A(m, n);
 	A.setRandom();
- 
+
 	Eigen::MatrixXd b(m, r);
 	b.setRandom();
 
 	Eigen::MatrixXd x0(n, r);
 	x0.setRandom();
-	// Initialize A£¬b£¬x0.
+	// Initialize A, b, x0.
 
-	Result res = ProxGD_one_step("Frob", "l_12", "BB", A, b, x0, 1e-2);
+	string fmode = "Frob";
+	string hmode = "L_12";
+	string tmode = "BB";
+
+	Result res = ProxGD_one_step(fmode, hmode, tmode, A, b, x0, 1e-2);
 	res.show();
 	// Calculate and show the result.
 

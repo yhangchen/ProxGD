@@ -43,9 +43,3 @@ int Result::modify_iter(int k)
 	iter = k;
 	return k; // Modify the iter to k.
 }
-
-int main(int argc, char const *argv[])
-{
-	/* code */
-	return 0;
-}

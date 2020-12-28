@@ -47,6 +47,7 @@ Result ProxGD_one_step(string fmode, string hmode, string tmode, MatrixXd A, Mat
 	Objective f_obj(fmode, A, b);
 	Penalty h_penalty(hmode, mu);
 	fhs[0] = f_obj.f(new_x) + mu * h_penalty.h(new_x);
+
 	for (int i = 1; i < M; i++)
 	{
 		fhs[i] = fhs[0];
@@ -70,6 +71,11 @@ Result ProxGD_one_step(string fmode, string hmode, string tmode, MatrixXd A, Mat
 		{
 			t = line_search(f_obj, tmode, new_x, gamma, 3, fhs, M, delta_x);
 		}
+		else
+		{
+			throw "incorrect line search method";
+		}
+
 		// First, we need to get the step size by line searching
 
 		x_star = new_x - t * f_obj.grad_f(new_x);
@@ -91,3 +97,9 @@ Result ProxGD_one_step(string fmode, string hmode, string tmode, MatrixXd A, Mat
 	Result res(iter, new_x, fhs[iter % M]);
 	return res;
 }
+
+// int main(int argc, char const *argv[])
+// {
+// 	/* code */
+// 	return 0;
+// }

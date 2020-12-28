@@ -1,6 +1,9 @@
-#pragma once
+#ifndef PROXGD
+#define PROXGD
 using namespace Eigen;
 using namespace std;
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
 
 class Objective
 {
@@ -101,3 +104,5 @@ Result ProxGD_one_step(string fmode, string hmode, string tmode, MatrixXd A, Mat
 
 double line_search(Objective &f_obj, string tmode, MatrixXd x, double gamma, int n, ...);
 // The function of line searching. It can decide the step size t. See line_search.cpp.
+
+#endif

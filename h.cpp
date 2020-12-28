@@ -583,16 +583,16 @@ MatrixXd Penalty::L_2_prox(MatrixXd x)
     return Penalty::L_21_prox(x);
 }
 
-int main()
-{
-    MatrixXd x = MatrixXd::Random(3, 1);
-    MatrixXd w = MatrixXd::Random(3, 1);
+// int main()
+// {
+//     // MatrixXd x = MatrixXd::Random(10, 1);
+//     // MatrixXd w = MatrixXd::Random(10, 10);
 
-    Penalty p((string) "GLasso", (double)0.1, w);
-    cout << "Mat:" << endl
-         << x << endl;
-    cout << "Th:" << endl
-         << p.h(x) << endl;
+//     // Penalty p((string) "GLasso", 0.1, w);
+//     // cout << "Mat:" << endl
+//     //      << x << endl;
+//     // cout << "Th:" << endl
+//     //      << p.prox_h(x, 0.1) << endl;
 
-    return 0;
-}
+//     // return 0;
+// }

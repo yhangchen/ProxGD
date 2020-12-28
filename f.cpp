@@ -62,9 +62,3 @@ int Objective::check(MatrixXd x)
 		throw "Incompatible size.";
 	return 0;
 }
-
-int main(int argc, char const *argv[])
-{
-	/* code */
-	return 0;
-}
