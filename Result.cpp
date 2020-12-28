@@ -1,25 +1,36 @@
 #include <iostream>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <random>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
-
 #include "ProxGD.h"
-#include <math.h>
+#include <assert.h>
+#include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <cfloat>
+#include <string>
 using namespace Eigen;
 using namespace std;
 
-Result::Result(int iter, MatrixXd x, double min_value) : x(x), iter(iter), min_value(min_value){};
+Result::Result(int iter, MatrixXd x, double min_value) : x(x), iter(iter), min_value(min_value), t(-1), exact_x_in(false){};
 // This is the constructor. It can initialize every memeber variable.
-
-// Result::Result(){};
-
-// Result::~Result(){};
 
 void Result::show()
 {
-	cout << "min point" << endl;
-	cout << x << endl;
 	cout << "iterations: " << iter << endl;
 	cout << "min value: " << min_value << endl;
+	if (t >= 0)
+	{
+		cout << "CPU time: " << t << endl;
+	}
+	if (exact_x_in)
+	{
+		cout << "error: " << err_function(x, exact_x) << endl;
+	}
+	cout << "sparsity: " << sparsity(x) << endl;
 	// This function can show each member variable.
 }
 
@@ -42,4 +53,42 @@ int Result::modify_iter(int k)
 {
 	iter = k;
 	return k; // Modify the iter to k.
+}
+
+double Result::add_time(double time)
+{
+	// set the cpu time;
+	t = time;
+	return t;
+}
+
+void Result::add_exact_x(MatrixXd x)
+{
+	// Add the exact solution.
+	exact_x_in = 1;
+	exact_x = x;
+}
+
+double err_function(MatrixXd x, MatrixXd x0)
+{
+	// Calculate the error.
+	MatrixXd delta_x = x - x0;
+	return delta_x.norm() / (1 + x0.norm());
+}
+
+double sparsity(MatrixXd x)
+{
+	// To calculate the sparsity.
+	int m = x.rows();
+	int n = x.cols();
+	int sp = 0;
+	int threshold = x.cwiseAbs().maxCoeff() * 1e-6;
+	for (int i = 0; i < m; i++)
+	{
+		for (int j = 0; j < n; j++)
+		{
+			sp += (fabs(x(i, j)) > threshold) ? 1 : 0;
+		}
+	}
+	return sp * 1.0 / (m * n);
 }

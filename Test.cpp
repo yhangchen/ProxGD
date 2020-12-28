@@ -5,12 +5,15 @@
 #include <stdlib.h>
 #include <random>
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
 #include "ProxGD.h"
 #include <assert.h>
 #include <algorithm>
 #include <fstream>
 #include <sstream>
-#include <cstring>
+#include <vector>
+#include <cfloat>
+#include <string>
 using namespace Eigen;
 using namespace std;
 
@@ -37,25 +40,36 @@ void save_file(string name, MatrixXd A)
 int main()
 {
 	static default_random_engine e(1);
-	int m = 100;
-	int n = 100;
-	int r = 2;
+	int m = 1024;
+	int n = 512;
+	int r = 1;
+	double mu = 1e-2;
+	double sp = 1e-1;
 
 	Eigen::MatrixXd A(m, n);
 	A.setRandom();
 
-	Eigen::MatrixXd b(m, r);
-	b.setRandom();
+	int *a = new int[n];
+	for (int i = 0; i < n; i++)
+	{
+		a[i] = i;
+	}
+	std::shuffle(a, a + n, std::default_random_engine(0));
+
+	Eigen::MatrixXd exact_x(n, r);
+	exact_x.setZero();
+	for (int i = 0; i < ceil(n * sp); i++)
+	{
+		exact_x.row(a[i]).setRandom();
+	}
+	Eigen::MatrixXd b = A * exact_x;
 
 	Eigen::MatrixXd x0(n, r);
 	x0.setRandom();
-	// Initialize A, b, x0.
+	// Initialize A£¬b£¬x0, ecact_x.
 
-	string fmode = "Frob";
-	string hmode = "L_12";
-	string tmode = "BB";
-
-	Result res = ProxGD_one_step(fmode, hmode, tmode, A, b, x0, 1e-2);
+	Result res = ProxGD("Frob", "L_1", "BB", A, b, x0, mu);
+	res.add_exact_x(exact_x);
 	res.show();
 	// Calculate and show the result.
 

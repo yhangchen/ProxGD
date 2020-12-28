@@ -82,18 +82,21 @@ class Result
 { // This class is used to store and show the result. See Result.cpp.
 public:
 	Result(int iter, MatrixXd x, double min_value);
-	// Result();
-	// ~Result();
 	void show(); // Show the result.
 	MatrixXd min_point();
 	double min_loss();
 	int iterations();
 	int modify_iter(int iter);
+	double add_time(double t);
+	void add_exact_x(MatrixXd x);
 
 private:
 	MatrixXd x;		  // Optimal x
 	int iter;		  // Time of iterations
 	double min_value; // Optimal value
+	double t;		  // CPU time
+	bool exact_x_in;  // When exact_x is added, this variable is true
+	MatrixXd exact_x; // Exact solution
 };
 
 Result ProxGD(string fmode, string hmode, string tmode, MatrixXd A, MatrixXd b, MatrixXd x0, double mu, double epsilon = 1e-6, double gamma = 0.5, int M = 2);
@@ -104,5 +107,11 @@ Result ProxGD_one_step(string fmode, string hmode, string tmode, MatrixXd A, Mat
 
 double line_search(Objective &f_obj, string tmode, MatrixXd x, double gamma, int n, ...);
 // The function of line searching. It can decide the step size t. See line_search.cpp.
+
+double err_function(MatrixXd x, MatrixXd x0);
+// To calculate the error. See Result.cpp.
+
+double sparsity(MatrixXd x);
+// To calculate the sparsity. See Result.cpp.
 
 #endif

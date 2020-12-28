@@ -1,14 +1,22 @@
 #include <iostream>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <random>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include "ProxGD.h"
-#include <math.h>
 #include <assert.h>
+#include <string>
+#include <ctime>
 using namespace Eigen;
 using namespace std;
 
 Result ProxGD(string fmode, string hmode, string tmode, MatrixXd A, MatrixXd b, MatrixXd x0, double mu, double epsilon, double gamma, int M)
 {
+	clock_t start, end;
+	start = clock();
+	// Start timing.
+
 	int K = ceil(fabs(log2f(mu)));
 	double muk = mu * pow(2, K);
 	Result res(0, x0, 0);
@@ -22,6 +30,9 @@ Result ProxGD(string fmode, string hmode, string tmode, MatrixXd A, MatrixXd b, 
 		iter += res.iterations();
 	}
 	res.modify_iter(iter);
+	end = clock();
+	double endtime = (double)(end - start) / CLOCKS_PER_SEC;
+	res.add_time(endtime); // Calculate the cpu time.
 	return res;
 }
 
@@ -31,6 +42,10 @@ Result ProxGD_one_step(string fmode, string hmode, string tmode, MatrixXd A, Mat
 	// A and b are the paramters of f. x0 is the initial value of iteration. mu is the coefficent before h.
 	// epsilon is the parameter of stopping rule. The returning value is a result class, containing the min value, the
 	// optimal point and the times of iteration.
+
+	clock_t start, end;
+	start = clock();
+	// Start timing.
 
 	MatrixXd new_x = x0;
 	MatrixXd prev_x = x0;
@@ -47,7 +62,6 @@ Result ProxGD_one_step(string fmode, string hmode, string tmode, MatrixXd A, Mat
 	Objective f_obj(fmode, A, b);
 	Penalty h_penalty(hmode, mu);
 	fhs[0] = f_obj.f(new_x) + mu * h_penalty.h(new_x);
-
 	for (int i = 1; i < M; i++)
 	{
 		fhs[i] = fhs[0];
@@ -71,11 +85,6 @@ Result ProxGD_one_step(string fmode, string hmode, string tmode, MatrixXd A, Mat
 		{
 			t = line_search(f_obj, tmode, new_x, gamma, 3, fhs, M, delta_x);
 		}
-		else
-		{
-			throw "incorrect line search method";
-		}
-
 		// First, we need to get the step size by line searching
 
 		x_star = new_x - t * f_obj.grad_f(new_x);
@@ -95,11 +104,8 @@ Result ProxGD_one_step(string fmode, string hmode, string tmode, MatrixXd A, Mat
 	}
 
 	Result res(iter, new_x, fhs[iter % M]);
+	end = clock();
+	double endtime = (double)(end - start) / CLOCKS_PER_SEC;
+	res.add_time(endtime); // Calculate the cpu time.
 	return res;
 }
-
-// int main(int argc, char const *argv[])
-// {
-// 	/* code */
-// 	return 0;
-// }
