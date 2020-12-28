@@ -8,6 +8,7 @@ using namespace Eigen;
 using namespace std;
 
 Objective::Objective(string mode, MatrixXd *A, MatrixXd *b) : mode(mode), A(A), b(b){};
+// initialize the class, including mode ("Frob" or "Log"), matrix A, b.
 
 double Objective::f(MatrixXd x)
 {
@@ -54,7 +55,7 @@ MatrixXd Objective::Logistic_grad(MatrixXd x)
 	return -(*A).transpose() * tmp.matrix();
 }
 
-int Objective::check(MatrixXd x)
+int Objective::check(MatrixXd x) // check the input data.
 {
 	int m = (*A).rows(),
 		r = (*A).cols(), r1 = x.rows(), n = x.cols(), m1 = (*b).rows(), n1 = (*b).cols();

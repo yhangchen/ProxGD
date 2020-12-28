@@ -18,7 +18,7 @@ Result ProxGD(string fmode, string hmode, string tmode, MatrixXd *A, MatrixXd *b
 	// Start timing.
 
 	int K = ceil(fabs(log2f(mu)));
-	double muk = mu * pow(2, K);
+	double muk = max(mu, ((*A).transpose() * *b).cwiseAbs().maxCoeff() / 2);
 	Result res(0, x0, 0);
 	int iter = 0;
 	double epsilonk = epsilon * pow(2, K);

@@ -17,12 +17,12 @@
 using namespace Eigen;
 using namespace std;
 
-void save_file(string name, MatrixXd A)
+void save_file(string name, string datatype, MatrixXd A)
 {
 	// Save the matrix A as csv files. name is the file name without ".csv".
 	// The file will be in the folder "data".
 	stringstream ss;
-	ss << "data\\" << name << ".csv";
+	ss << "./data/" << name << datatype << ".csv ";
 	ss >> name;
 	ofstream fout;
 	fout.open(name, ios::out | ios::trunc);
@@ -37,15 +37,8 @@ void save_file(string name, MatrixXd A)
 	fout.close();
 }
 
-int main()
+void sparsity_test(string fmode, string hmode, string tmode, int m, int n, int r, double mu, double sp)
 {
-	static default_random_engine e(1);
-	int m = 1024;
-	int n = 512;
-	int r = 1;
-	double mu = 1e-2;
-	double sp = 1e-1;
-
 	Eigen::MatrixXd A(m, n);
 	A.setRandom();
 
@@ -67,16 +60,41 @@ int main()
 	Eigen::MatrixXd x0(n, r);
 	x0.setRandom();
 	// Initialize A£¬b£¬x0, ecact_x.
-
-	Result res = ProxGD("Frob", "TV_1D", "BB", &A, &b, x0, mu);
+	Result res = ProxGD_one_step(fmode, hmode, tmode, &A, &b, x0, mu);
 	res.add_exact_x(exact_x);
 	res.show();
 	// Calculate and show the result.
+	string name = fmode + "_" + hmode + "_" + tmode;
+	save_file(name, "A", A);
+	save_file(name, "b", b);
+	save_file(name, "x0", x0);
+	save_file(name, "x", res.min_point());
+}
 
-	save_file("A", A);
-	save_file("b", b);
-	save_file("x0", x0);
-	save_file("x", res.min_point());
+void main_parsity_test()
+{
+	static default_random_engine e(0);
+	int m = 1024;
+	int n = 512;
+	int r = 1;
+	double mu = 1e-2;
+	double sp = 1e-1; // sparsity.
+	string fmode = "Frob";
+	string tmode = "BB";
+	string hmode = "L_0";
+	sparsity_test(fmode, hmode, tmode, m, n, r, mu, sp);
+	hmode = "L_1";
+	sparsity_test(fmode, hmode, tmode, m, n, r, mu, sp);
+	hmode = "L_2";
+	sparsity_test(fmode, hmode, tmode, m, n, r, mu, sp);
+	hmode = "L_inf";
+	sparsity_test(fmode, hmode, tmode, m, n, r, mu, sp);
+	hmode = "Elastic";
+	sparsity_test(fmode, hmode, tmode, m, n, r, mu, sp);
+}
 
+int main()
+{
+	main_parsity_test();
 	return 0;
 }

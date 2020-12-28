@@ -3,7 +3,7 @@
 #include <Eigen/Sparse>
 #include <vector>
 
-#include <cfloat>
+#include <cfloat> // use DBL_EPSILON to avoid zero division error.
 #include <stdarg.h>
 #include "ProxGD.h"
 #include <string>
@@ -12,6 +12,13 @@ using namespace std;
 
 Penalty::Penalty(string mode0, int n, ...)
 {
+    /* The first input is the mode of the penalty function.
+
+    For general functions, the second input is penalty parameter mu, the third input is double alpha (for elastic net), double matrix D (for General Group Lasso). If we use the TV norm penalty, we need to provide the nrows and ncols of the input x to generate sparse matrix D_sp, and call GLasso solver. We store D_T, D_sp_T, being the transpose of D and D_sp for future use.
+
+    For indicator functions, the second input is int (only for L_0 and rank constraints). For box constriants, we need to specify the upper and lower bound matrix, U and L separately. For half space, we need to provide the matrix and constant; for affine functions, we vectorize matrix x, and provide matrix A (A.ncols=x.size()) and vector b.  
+    
+    */
     mode = mode0;
     if (mode.substr(0, 3) == "Ind")
     {
@@ -32,7 +39,7 @@ Penalty::Penalty(string mode0, int n, ...)
             {
                 A = va_arg(args, MatrixXd);
                 b = va_arg(args, MatrixXd);
-                AAT = A * A.transpose();
+                AAT = A * A.transpose(); // store AAT in advance for future use.
             }
             else if (mode == "Ind_half")
             {
@@ -102,7 +109,7 @@ Penalty::Penalty(string mode0, int n, ...)
     }
 }
 
-double Penalty::h(MatrixXd x)
+double Penalty::h(MatrixXd x) // wrapper
 {
     if (mode == "L_0")
     {
@@ -135,7 +142,7 @@ double Penalty::h(MatrixXd x)
         throw "incorrect objective function.";
 }
 
-MatrixXd Penalty::prox_h(MatrixXd x, double new_mu)
+MatrixXd Penalty::prox_h(MatrixXd x, double new_mu) // wrapper.
 {
     mu = new_mu;
     if (mode == "L_0")
@@ -219,7 +226,7 @@ MatrixXd Penalty::Ind_L_1_prox(MatrixXd x)
     double l = 0;
     double m = (u + l) / 2.0;
     double vm = (Penalty::L1_soft(x, m)).cwiseAbs().sum();
-    while (fabs(vm - R) > FLT_EPSILON)
+    while (fabs(vm - R) > FLT_EPSILON) //bisection method.
     {
         if (vm > R)
         {
@@ -363,12 +370,12 @@ double Penalty::L_0(MatrixXd x)
 double Penalty::GLasso(MatrixXd x)
 {
     MatrixXd y;
-    if (D_T.size() > 0)
+    if (D_T.size() > 0) // dense
     {
         assert(D_T.rows() == x.rows());
         y = D_T.transpose() * x;
     }
-    else
+    else // sparse
     {
         assert(D_sp_T.rows() == x.rows());
         y = D_sp_T.transpose() * x;
@@ -433,7 +440,7 @@ MatrixXd Penalty::L_12_prox(MatrixXd x)
     MatrixXd result = x;
     for (int i = 0; i < x.rows(); i++)
     {
-        if (x.row(i).norm() < DBL_EPSILON)
+        if (x.row(i).norm() < mu)
         {
             result.row(i) *= 0;
         }
@@ -519,7 +526,7 @@ MatrixXd Penalty::GLasso_prox(MatrixXd x)
 {
     MatrixXd mx = -x;
     MatrixXd *x_p = &mx;
-    if (D_T.size() > 0)
+    if (D_T.size() > 0) // dense.
     {
         assert(D_T.rows() == x.rows());
         MatrixXd W_init = MatrixXd::Zero(D_T.cols(), x.cols());
@@ -527,7 +534,7 @@ MatrixXd Penalty::GLasso_prox(MatrixXd x)
         MatrixXd W0 = W.min_point();
         return x + D_T * W0;
     }
-    else
+    else // sparse.
     {
         assert(D_sp_T.rows() == x.rows());
         MatrixXd W_init = MatrixXd::Zero(D_sp_T.cols(), x.cols());
@@ -589,17 +596,3 @@ MatrixXd Penalty::L_2_prox(MatrixXd x)
     assert(x.cols() == 1);
     return Penalty::L_21_prox(x);
 }
-
-// int main()
-// {
-//     // MatrixXd x = MatrixXd::Random(10, 1);
-//     // MatrixXd w = MatrixXd::Random(10, 10);
-
-//     // Penalty p((string) "GLasso", 0.1, w);
-//     // cout << "Mat:" << endl
-//     //      << x << endl;
-//     // cout << "Th:" << endl
-//     //      << p.prox_h(x, 0.1) << endl;
-
-//     // return 0;
-// }
