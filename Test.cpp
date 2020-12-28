@@ -68,7 +68,7 @@ int main()
 	x0.setRandom();
 	// Initialize A£¬b£¬x0, ecact_x.
 
-	Result res = ProxGD("Frob", "L_1", "BB", A, b, x0, mu);
+	Result res = ProxGD("Frob", "TV_1D", "BB", A, b, x0, mu);
 	res.add_exact_x(exact_x);
 	res.show();
 	// Calculate and show the result.

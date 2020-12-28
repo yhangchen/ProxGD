@@ -60,8 +60,8 @@ Result ProxGD_one_step(string fmode, string hmode, string tmode, MatrixXd A, Mat
 	double t;
 	double *fhs = new double[M];
 	Objective f_obj(fmode, A, b);
-	Penalty h_penalty(hmode, mu);
-	fhs[0] = f_obj.f(new_x) + mu * h_penalty.h(new_x);
+	Penalty h_penalty(hmode, mu, x0.rows(), x0.cols());
+	fhs[0] = f_obj.f(new_x);
 	for (int i = 1; i < M; i++)
 	{
 		fhs[i] = fhs[0];
@@ -98,7 +98,7 @@ Result ProxGD_one_step(string fmode, string hmode, string tmode, MatrixXd A, Mat
 		iter = iter + 1;
 		// Update the iteration times.
 
-		fhs[iter % M] = f_obj.f(new_x) + mu * h_penalty.h(new_x);
+		fhs[iter % M] = f_obj.f(new_x);
 		;
 		// Update the function value.
 	}

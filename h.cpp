@@ -234,7 +234,7 @@ MatrixXd Penalty::Ind_L_1_prox(MatrixXd x)
 
 MatrixXd Penalty::Ind_L_F_prox(MatrixXd x)
 {
-    return x * min(1.0, R / x.norm());
+    return x * min(1.0, R / (x.norm() + DBL_EPSILON));
 }
 
 MatrixXd Penalty::Ind_L_inf_prox(MatrixXd x)
@@ -245,7 +245,7 @@ MatrixXd Penalty::Ind_L_inf_2_prox(MatrixXd x)
 {
     int n = x.rows();
     for (int i = 0; i < n; i++)
-        x.row(i) /= min(1.0, R / x.row(i).norm());
+        x.row(i) *= min(1.0, R / (x.row(i).norm() + DBL_EPSILON));
     return x;
 }
 
@@ -274,7 +274,7 @@ MatrixXd Penalty::Ind_half_prox(MatrixXd x)
     assert(A.cols() == x.cols());
     Map<VectorXd> x1(x.data(), x.size());
     Map<VectorXd> a(A.data(), A.size());
-    return x - A / A.norm() * (x1.dot(a) - constant);
+    return x - A / (A.norm() + DBL_EPSILON) * (x1.dot(a) - constant);
 }
 
 MatrixXd Penalty::Ind_affine_prox(MatrixXd x)
@@ -517,14 +517,16 @@ MatrixXd Penalty::GLasso_prox(MatrixXd x)
     if (D.size() > 0)
     {
         assert(D.cols() == x.rows());
-        Result W = ProxGD((string) "Frob", (string) "Ind_L_inf_2", (string) "BB", D.transpose(), -x, x, mu);
+        MatrixXd W_init = MatrixXd::Zero(D.rows(), x.cols());
+        Result W = ProxGD((string) "Frob", (string) "Ind_L_inf_2", (string) "BB", D.transpose(), -x, W_init, mu);
         MatrixXd W0 = W.min_point();
         return x + D.transpose() * W0;
     }
     else
     {
         assert(D_sp.cols() == x.rows());
-        Result W = ProxGD("Frob", "Ind_L_inf_2", "BB", D_sp.transpose(), -x, x, mu);
+        MatrixXd W_init = MatrixXd::Zero(D_sp.rows(), x.cols());
+        Result W = ProxGD("Frob", "Ind_L_inf_2", "BB", D_sp.transpose(), -x, W_init, mu);
         MatrixXd W0 = W.min_point();
         return x + D_sp.transpose() * W0;
     }
