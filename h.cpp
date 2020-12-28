@@ -54,7 +54,10 @@ Penalty::Penalty(string mode0, int n, ...)
         if (mode == "Elastic")
             double alpha = va_arg(args, double);
         else if (mode == "GLasso")
-            D = va_arg(args, MatrixXd);
+        {
+            D_T = va_arg(args, MatrixXd);
+            D_T = D_T.transpose();
+        }
         else if (mode == "TV_1D")
         {
             int nrows = va_arg(args, int); // # of rows of input vector.
@@ -68,7 +71,7 @@ Penalty::Penalty(string mode0, int n, ...)
             }
             Eigen::SparseMatrix<double> mat(nrows - 1, nrows);
             mat.setFromTriplets(tripletList.begin(), tripletList.end());
-            D_sp = mat;
+            D_sp_T = mat.transpose();
         }
         else if (mode == "TV_2D")
         {
@@ -93,7 +96,7 @@ Penalty::Penalty(string mode0, int n, ...)
             }
             Eigen::SparseMatrix<double> mat(2 * ncols * nrows - nrows - ncols, ncols * nrows);
             mat.setFromTriplets(tripletList.begin(), tripletList.end());
-            D_sp = mat;
+            D_sp_T = mat.transpose();
         }
         va_end(args);
     }
@@ -348,7 +351,7 @@ double Penalty::L_inf(MatrixXd x)
 
 double Penalty::L_0(MatrixXd x)
 {
-    double result;
+    double result = 0.0;
     assert(x.cols() == 1);
     for (int i = 0; i < x.rows(); i++)
     {
@@ -360,15 +363,15 @@ double Penalty::L_0(MatrixXd x)
 double Penalty::GLasso(MatrixXd x)
 {
     MatrixXd y;
-    if (D.size() > 0)
+    if (D_T.size() > 0)
     {
-        assert(D.cols() == x.rows());
-        y = D * x;
+        assert(D_T.rows() == x.rows());
+        y = D_T.transpose() * x;
     }
     else
     {
-        assert(D_sp.cols() == x.rows());
-        y = D_sp * x;
+        assert(D_sp_T.rows() == x.rows());
+        y = D_sp_T.transpose() * x;
     }
 
     double result = 0.0;
@@ -514,21 +517,23 @@ MatrixXd Penalty::L_inf_prox(MatrixXd x)
 
 MatrixXd Penalty::GLasso_prox(MatrixXd x)
 {
-    if (D.size() > 0)
+    MatrixXd mx = -x;
+    MatrixXd *x_p = &mx;
+    if (D_T.size() > 0)
     {
-        assert(D.cols() == x.rows());
-        MatrixXd W_init = MatrixXd::Zero(D.rows(), x.cols());
-        Result W = ProxGD((string) "Frob", (string) "Ind_L_inf_2", (string) "BB", D.transpose(), -x, W_init, mu);
+        assert(D_T.rows() == x.rows());
+        MatrixXd W_init = MatrixXd::Zero(D_T.cols(), x.cols());
+        Result W = ProxGD("Frob", "Ind_L_inf_2", "BB", &D_T, x_p, W_init, mu);
         MatrixXd W0 = W.min_point();
-        return x + D.transpose() * W0;
+        return x + D_T * W0;
     }
     else
     {
-        assert(D_sp.cols() == x.rows());
-        MatrixXd W_init = MatrixXd::Zero(D_sp.rows(), x.cols());
-        Result W = ProxGD("Frob", "Ind_L_inf_2", "BB", D_sp.transpose(), -x, W_init, mu);
+        assert(D_sp_T.rows() == x.rows());
+        MatrixXd W_init = MatrixXd::Zero(D_sp_T.cols(), x.cols());
+        Result W = ProxGD_Sparse("Frob", "Ind_L_inf_2", "BB", &D_sp_T, x_p, W_init, mu);
         MatrixXd W0 = W.min_point();
-        return x + D_sp.transpose() * W0;
+        return x + D_sp_T * W0;
     }
 }
 

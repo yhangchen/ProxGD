@@ -11,7 +11,7 @@
 using namespace Eigen;
 using namespace std;
 
-Result ProxGD(string fmode, string hmode, string tmode, MatrixXd A, MatrixXd b, MatrixXd x0, double mu, double epsilon, double gamma, int M)
+Result ProxGD(string fmode, string hmode, string tmode, MatrixXd *A, MatrixXd *b, MatrixXd x0, double mu, double epsilon, double gamma, int M)
 {
 	clock_t start, end;
 	start = clock();
@@ -36,7 +36,7 @@ Result ProxGD(string fmode, string hmode, string tmode, MatrixXd A, MatrixXd b, 
 	return res;
 }
 
-Result ProxGD_one_step(string fmode, string hmode, string tmode, MatrixXd A, MatrixXd b, MatrixXd x0, double mu, double epsilon, double gamma, int M)
+Result ProxGD_one_step(string fmode, string hmode, string tmode, MatrixXd *A, MatrixXd *b, MatrixXd x0, double mu, double epsilon, double gamma, int M)
 {
 	// Calculate the min value of f(x)+g(x). Input fmode, hmode, tmode to decide f, h and the mode of line searching.
 	// A and b are the paramters of f. x0 is the initial value of iteration. mu is the coefficent before h.
@@ -92,6 +92,7 @@ Result ProxGD_one_step(string fmode, string hmode, string tmode, MatrixXd A, Mat
 
 		prev_x = new_x;
 		new_x = h_penalty.prox_h(x_star, t * mu); // Here, we use prox_h to calculate new x.
+
 		delta_x = new_x - prev_x;
 		// Update prev_x after updating new_x. Update delta_x at last.
 
@@ -102,8 +103,8 @@ Result ProxGD_one_step(string fmode, string hmode, string tmode, MatrixXd A, Mat
 		;
 		// Update the function value.
 	}
-
 	Result res(iter, new_x, fhs[iter % M]);
+
 	end = clock();
 	double endtime = (double)(end - start) / CLOCKS_PER_SEC;
 	res.add_time(endtime); // Calculate the cpu time.

@@ -8,7 +8,7 @@ using namespace std;
 class Objective
 {
 public:
-	Objective(string mode, MatrixXd A, MatrixXd b);
+	Objective(string mode, MatrixXd *A, MatrixXd *b);
 	double f(MatrixXd x);
 	MatrixXd grad_f(MatrixXd x);
 	double Frob(MatrixXd x);
@@ -19,8 +19,26 @@ public:
 
 private:
 	string mode;
-	MatrixXd A;
-	MatrixXd b;
+	MatrixXd *A;
+	MatrixXd *b;
+};
+
+class Objective_Sparse
+{
+public:
+	Objective_Sparse(string mode, SparseMatrix<double> *A, MatrixXd *b);
+	double f(MatrixXd x);
+	MatrixXd grad_f(MatrixXd x);
+	double Frob(MatrixXd x);
+	MatrixXd Frob_grad(MatrixXd x);
+	double Logistic(MatrixXd x);
+	MatrixXd Logistic_grad(MatrixXd x);
+	int check(MatrixXd x);
+
+private:
+	string mode;
+	SparseMatrix<double> *A;
+	MatrixXd *b;
 };
 
 class Penalty
@@ -30,8 +48,8 @@ private:
 	double mu, alpha, R, constant;
 	int R0;
 	string mode;
-	MatrixXd D, A, b, L, U, AAT;
-	SparseMatrix<double> D_sp;
+	MatrixXd D_T, A, b, L, U, AAT;
+	SparseMatrix<double> D_sp_T;
 
 public:
 	Penalty(string mode, int n, ...);
@@ -99,13 +117,22 @@ private:
 	MatrixXd exact_x; // Exact solution
 };
 
-Result ProxGD(string fmode, string hmode, string tmode, MatrixXd A, MatrixXd b, MatrixXd x0, double mu, double epsilon = 1e-6, double gamma = 0.5, int M = 2);
+Result ProxGD(string fmode, string hmode, string tmode, MatrixXd *A, MatrixXd *b, MatrixXd x0, double mu, double epsilon = 1e-6, double gamma = 0.5, int M = 2);
 // To calculate the minimum of f(x)+g(x). See ProxGD.cpp.
 
-Result ProxGD_one_step(string fmode, string hmode, string tmode, MatrixXd A, MatrixXd b, MatrixXd x0, double mu, double epsilon = 1e-6, double gamma = 0.5, int M = 2);
+Result ProxGD_one_step(string fmode, string hmode, string tmode, MatrixXd *A, MatrixXd *b, MatrixXd x0, double mu, double epsilon = 1e-6, double gamma = 0.5, int M = 2);
+// To calculate the minimum of f(x)+g(x). See ProxGD.cpp.
+
+Result ProxGD_Sparse(string fmode, string hmode, string tmode, SparseMatrix<double> *A, MatrixXd *b, MatrixXd x0, double mu, double epsilon = 1e-6, double gamma = 0.5, int M = 2);
+// To calculate the minimum of f(x)+g(x). See ProxGD.cpp.
+
+Result ProxGD_Sparse_one_step(string fmode, string hmode, string tmode, SparseMatrix<double> *A, MatrixXd *b, MatrixXd x0, double mu, double epsilon = 1e-6, double gamma = 0.5, int M = 2);
 // To calculate the minimum of f(x)+g(x). See ProxGD.cpp.
 
 double line_search(Objective &f_obj, string tmode, MatrixXd x, double gamma, int n, ...);
+// The function of line searching. It can decide the step size t. See line_search.cpp.
+
+double line_search_sparse(Objective_Sparse &f_obj, string tmode, MatrixXd x, double gamma, int n, ...);
 // The function of line searching. It can decide the step size t. See line_search.cpp.
 
 double err_function(MatrixXd x, MatrixXd x0);
