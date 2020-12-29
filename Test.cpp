@@ -17,6 +17,26 @@
 using namespace Eigen;
 using namespace std;
 
+void save_file(string name, string datatype, MatrixXd A)
+{
+    // Save the matrix A as csv files. name is the file name without ".csv".
+    // The file will be in the folder "data".
+    stringstream ss;
+    ss << "./data/" << name << datatype << ".csv ";
+    ss >> name;
+    ofstream fout;
+    fout.open(name, ios::out | ios::trunc);
+    for (int i = 0; i < A.rows(); i++)
+    {
+        for (int j = 0; j < A.cols(); j++)
+        {
+            fout << A(i, j) << ' ';
+        }
+        fout << '\n';
+    }
+    fout.close();
+}
+
 double denoise(string name1, string name2, int row, int col)
 {
     string path1;
@@ -32,11 +52,13 @@ double denoise(string name1, string name2, int row, int col)
         MatrixXd x0 = read_mat(row, col, path1);
         path2 = "./image/" + name2 + to_string(i + 1) + ".csv";
         MatrixXd x_exact = read_mat(row, col, path2);
-        cout << x_exact << endl;
         Result res = ProxGD_one_step("Frob", "TV_2D", "BB", &A, &x_exact, x0, 1e-2);
         res.show();
         path3 = name2 + "_denoise_" + to_string(i + 1) + ".csv";
-        // save_file(path3, res.min_point());
+        save_file(path3, "_A", A);
+        save_file(path3, "_b", x_exact);
+        save_file(path3, "_x0", x0);
+        save_file(path3, "_x", res.min_point());
     }
 
     return 0.0;
@@ -68,26 +90,6 @@ MatrixXd read_mat(int row, int col, string name)
 
     indata.close();
     return A;
-}
-
-void save_file(string name, string datatype, MatrixXd A)
-{
-    // Save the matrix A as csv files. name is the file name without ".csv".
-    // The file will be in the folder "data".
-    stringstream ss;
-    ss << "./data/" << name << datatype << ".csv ";
-    ss >> name;
-    ofstream fout;
-    fout.open(name, ios::out | ios::trunc);
-    for (int i = 0; i < A.rows(); i++)
-    {
-        for (int j = 0; j < A.cols(); j++)
-        {
-            fout << A(i, j) << ' ';
-        }
-        fout << '\n';
-    }
-    fout.close();
 }
 
 void sparsity_test(string fmode, string hmode, string tmode, int m, int n, int r, double mu, double sp)
@@ -164,6 +166,6 @@ void main_parsity_test()
 int main()
 {
     main_parsity_test();
-    // denoise("img_noise", "img", 512, 512);
+    denoise("img_noise", "img", 512, 512);
     return 0;
 }

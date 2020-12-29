@@ -145,6 +145,5 @@ double denoise(string name1, string name2, int row, int col);
 
 MatrixXd read_mat(int row, int col, string name);
 
-void save_file(string name, MatrixXd A);
-
+void save_file(string name, string datatype, MatrixXd A);
 #endif
