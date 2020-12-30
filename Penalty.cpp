@@ -109,6 +109,15 @@ Penalty::Penalty(string mode0, int n, ...)
     }
 }
 
+double Penalty::get_mu()
+{
+    return mu;
+}
+string Penalty::get_mode()
+{
+    return mode;
+}
+
 double Penalty::h(MatrixXd x) // wrapper
 {
     if (mode == "L_0")
@@ -319,8 +328,8 @@ MatrixXd Penalty::Ind_psd_prox(MatrixXd x)
 
 MatrixXd Penalty::Ind_rank_prox(MatrixXd x)
 {
-    JacobiSVD<MatrixXd> svd(x, ComputeThinU | ComputeThinV);
-    return svd.matrixU() * svd.singularValues().head(R0).asDiagonal() * svd.matrixV().transpose();
+    JacobiSVD<MatrixXd> svd((x + x.transpose()) / 2.0, ComputeThinU | ComputeThinV);
+    return svd.matrixU().leftCols(R0) * svd.singularValues().head(R0).asDiagonal() * svd.matrixV().leftCols(R0).transpose();
 }
 
 double Penalty::L_12(MatrixXd x)
@@ -530,7 +539,9 @@ MatrixXd Penalty::GLasso_prox(MatrixXd x)
     {
         assert(D_T.rows() == x.rows());
         MatrixXd W_init = MatrixXd::Zero(D_T.cols(), x.cols());
-        Result W = ProxGD("Frob", "Ind_L_inf_2", "BB", &D_T, x_p, W_init, mu);
+        Objective f_obj("Frob", &D_T, x_p);
+        Penalty h_penalty("Ind_L_inf_2", 1, mu);
+        Result W = ProxGD(f_obj, h_penalty, "BB", &D_T, x_p, W_init, mu);
         MatrixXd W0 = W.min_point();
         return x + D_T * W0;
     }
@@ -538,7 +549,9 @@ MatrixXd Penalty::GLasso_prox(MatrixXd x)
     {
         assert(D_sp_T.rows() == x.rows());
         MatrixXd W_init = MatrixXd::Zero(D_sp_T.cols(), x.cols());
-        Result W = ProxGD_Sparse("Frob", "Ind_L_inf_2", "BB", &D_sp_T, x_p, W_init, mu);
+        Objective_Sparse f_obj("Frob", &D_sp_T, x_p);
+        Penalty h_penalty("Ind_L_inf_2", 1, mu);
+        Result W = ProxGD_Sparse(f_obj, h_penalty, "BB", &D_sp_T, x_p, W_init, mu);
         MatrixXd W0 = W.min_point();
         return x + D_sp_T * W0;
     }

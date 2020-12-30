@@ -15,13 +15,14 @@
 using namespace Eigen;
 using namespace std;
 
-Result::Result(int iter, MatrixXd x, double min_value) : x(x), iter(iter), min_value(min_value), t(-1), exact_x_in(false){};
+Result::Result(int iter, MatrixXd x, double min_value, double penalty_value) : x(x), iter(iter), min_value(min_value), penalty_value(penalty_value), t(-1), exact_x_in(false){};
 // This is the constructor. It can initialize every memeber variable.
 
 void Result::show()
 {
 	cout << "iterations: " << iter << endl;
 	cout << "min value: " << min_value << endl;
+	cout << "penalty value: " << penalty_value << endl;
 	if (t >= 0)
 	{
 		cout << "CPU time: " << t << endl;

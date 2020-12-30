@@ -9,6 +9,20 @@ using namespace std;
 
 Objective_Sparse::Objective_Sparse(string mode, SparseMatrix<double> *A, MatrixXd *b) : mode(mode), A(A), b(b){};
 
+SparseMatrix<double> *Objective_Sparse::get_A()
+{
+    return A;
+}
+
+MatrixXd *Objective_Sparse::get_b()
+{
+    return b;
+}
+string Objective_Sparse::get_mode()
+{
+    return mode;
+}
+
 double Objective_Sparse::f(MatrixXd x)
 {
     if (mode == "Frob")

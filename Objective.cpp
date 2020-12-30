@@ -10,6 +10,20 @@ using namespace std;
 Objective::Objective(string mode, MatrixXd *A, MatrixXd *b) : mode(mode), A(A), b(b){};
 // initialize the class, including mode ("Frob" or "Log"), matrix A, b.
 
+MatrixXd *Objective::get_A()
+{
+	return A;
+}
+
+MatrixXd *Objective::get_b()
+{
+	return b;
+}
+string Objective::get_mode()
+{
+	return mode;
+}
+
 double Objective::f(MatrixXd x)
 {
 	if (mode == "Frob")
