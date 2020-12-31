@@ -1,14 +1,11 @@
-#ifndef PROXGD
-#define PROXGD
+#pragma once
 using namespace Eigen;
 using namespace std;
-#include <Eigen/Dense>
-#include <Eigen/Sparse>
 
 class Objective
 {
 public:
-	Objective(string mode, MatrixXd *A, MatrixXd *b);
+	Objective(string mode, SparseMatrix<double> A, MatrixXd b);
 	double f(MatrixXd x);
 	MatrixXd grad_f(MatrixXd x);
 	double Frob(MatrixXd x);
@@ -16,35 +13,11 @@ public:
 	double Logistic(MatrixXd x);
 	MatrixXd Logistic_grad(MatrixXd x);
 	int check(MatrixXd x);
-	MatrixXd *get_A();
-	MatrixXd *get_b();
-	string get_mode();
 
 private:
 	string mode;
-	MatrixXd *A;
-	MatrixXd *b;
-};
-
-class Objective_Sparse
-{
-public:
-	Objective_Sparse(string mode, SparseMatrix<double> *A, MatrixXd *b);
-	double f(MatrixXd x);
-	MatrixXd grad_f(MatrixXd x);
-	double Frob(MatrixXd x);
-	MatrixXd Frob_grad(MatrixXd x);
-	double Logistic(MatrixXd x);
-	MatrixXd Logistic_grad(MatrixXd x);
-	int check(MatrixXd x);
-	SparseMatrix<double> *get_A();
-	MatrixXd *get_b();
-	string get_mode();
-
-private:
-	string mode;
-	SparseMatrix<double> *A;
-	MatrixXd *b;
+	SparseMatrix<double> A;
+	MatrixXd b;
 };
 
 class Penalty
@@ -54,13 +27,11 @@ private:
 	double mu, alpha, R, constant;
 	int R0;
 	string mode;
-	MatrixXd D_T, A, b, L, U, AAT;
-	SparseMatrix<double> D_sp_T;
+	MatrixXd D, A, b, L, U, AAT;
+	SparseMatrix<double> D_sp;
 
 public:
 	Penalty(string mode, int n, ...);
-	double get_mu();
-	string get_mode();
 	double h(MatrixXd x);
 	MatrixXd prox_h(MatrixXd x, double new_mu);
 	int is_positive(MatrixXd x);
@@ -107,7 +78,7 @@ public:
 class Result
 { // This class is used to store and show the result. See Result.cpp.
 public:
-	Result(int iter, MatrixXd x, double min_value, double penalty_value);
+	Result(int iter, MatrixXd x, double min_value);
 	void show(); // Show the result.
 	MatrixXd min_point();
 	double min_loss();
@@ -115,6 +86,7 @@ public:
 	int modify_iter(int iter);
 	double add_time(double t);
 	void add_exact_x(MatrixXd x);
+	void save(string name);
 
 private:
 	MatrixXd x;		  // Optimal x
@@ -123,25 +95,15 @@ private:
 	double t;		  // CPU time
 	bool exact_x_in;  // When exact_x is added, this variable is true
 	MatrixXd exact_x; // Exact solution
-	double penalty_value;
 };
 
-Result ProxGD(Objective &f_obj, Penalty &h_penalty, string tmode, MatrixXd *A, MatrixXd *b, MatrixXd x0, double mu = 0, double epsilon = 1e-6, double gamma = 0.5, int M = 2);
+Result ProxGD(string fmode, string hmode, string tmode, MatrixXd A, MatrixXd b, MatrixXd x0, double mu, double epsilon = 1e-6, double gamma = 0.5, int M = 2);
 // To calculate the minimum of f(x)+g(x). See ProxGD.cpp.
 
-Result ProxGD_one_step(Objective &f_obj, Penalty &h_penalty, string tmode, MatrixXd *A, MatrixXd *b, MatrixXd x0, double mu = 0, double epsilon = 1e-6, double gamma = 0.5, int M = 2);
-// To calculate the minimum of f(x)+g(x). See ProxGD.cpp.
-
-Result ProxGD_Sparse(Objective_Sparse &f_obj, Penalty &h_penalty, string tmode, SparseMatrix<double> *A, MatrixXd *b, MatrixXd x0, double mu = 0, double epsilon = 1e-6, double gamma = 0.5, int M = 2);
-// To calculate the minimum of f(x)+g(x). See ProxGD.cpp.
-
-Result ProxGD_Sparse_one_step(Objective_Sparse &f_obj, Penalty &h_penalty, string tmode, SparseMatrix<double> *A, MatrixXd *b, MatrixXd x0, double mu = 0, double epsilon = 1e-6, double gamma = 0.5, int M = 2);
+Result ProxGD_one_step(string fmode, string hmode, string tmode, SparseMatrix<double> A, MatrixXd b, MatrixXd x0, double mu, double epsilon = 1e-6, double gamma = 0.5, int M = 2);
 // To calculate the minimum of f(x)+g(x). See ProxGD.cpp.
 
 double line_search(Objective &f_obj, string tmode, MatrixXd x, double gamma, int n, ...);
-// The function of line searching. It can decide the step size t. See line_search.cpp.
-
-double line_search_sparse(Objective_Sparse &f_obj, string tmode, MatrixXd x, double gamma, int n, ...);
 // The function of line searching. It can decide the step size t. See line_search.cpp.
 
 double err_function(MatrixXd x, MatrixXd x0);
@@ -150,4 +112,8 @@ double err_function(MatrixXd x, MatrixXd x0);
 double sparsity(MatrixXd x);
 // To calculate the sparsity. See Result.cpp.
 
-#endif
+double denoise(string name1, string name2, int row);
+
+MatrixXd read_mat(int row, int col, string name);
+
+void save_file(string name, MatrixXd A);
