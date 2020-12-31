@@ -6,25 +6,39 @@
 #include <Eigen/Sparse>
 #include "ProxGD.h"
 #include <assert.h>
+#include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <cfloat>
 #include <string>
 #include <ctime>
 using namespace Eigen;
 using namespace std;
 
-Result ProxGD(Objective &f_obj, Penalty &h_penalty, string tmode, MatrixXd *A, MatrixXd *b, MatrixXd x0, double mu, double epsilon, double gamma, int M)
+Result ProxGD(string fmode, string hmode, string tmode, MatrixXd A, MatrixXd b, MatrixXd x0, double mu, double epsilon, double gamma, int M)
 {
+	/*
 	clock_t start, end;
 	start = clock();
 	// Start timing.
 
-	int K = ceil(fabs(log2f(mu)));
-	double muk = max(mu, ((*A).transpose() * *b).cwiseAbs().maxCoeff() / 2);
-	Result res(0, x0, 0, 0);
+	int K;
+	if (mu > 1e-10)
+	{
+		K = ceil(fabs(log2f(mu)));
+	}
+	else
+	{
+		K = 0;
+	}
+	double muk = mu * pow(2, K);
+	Result res(0, x0, 0);
 	int iter = 0;
 	double epsilonk = epsilon * pow(2, K);
 	for (int i = 0; i <= K; i++)
 	{
-		res = ProxGD_one_step(f_obj, h_penalty, tmode, A, b, res.min_point(), muk, epsilonk, gamma, M);
+		res = ProxGD_one_step(fmode, hmode, tmode, A, b, res.min_point(), muk, epsilonk, gamma, M);
 		muk /= 2;
 		epsilonk /= 2;
 		iter += res.iterations();
@@ -32,11 +46,13 @@ Result ProxGD(Objective &f_obj, Penalty &h_penalty, string tmode, MatrixXd *A, M
 	res.modify_iter(iter);
 	end = clock();
 	double endtime = (double)(end - start) / CLOCKS_PER_SEC;
-	res.add_time(endtime); // Calculate the cpu time.
+	res.add_time(endtime);// Calculate the cpu time.
+	*/
+	Result res(0, x0, 0);
 	return res;
 }
 
-Result ProxGD_one_step(Objective &f_obj, Penalty &h_penalty, string tmode, MatrixXd *A, MatrixXd *b, MatrixXd x0, double mu, double epsilon, double gamma, int M)
+Result ProxGD_one_step(string fmode, string hmode, string tmode, SparseMatrix<double> A, MatrixXd b, MatrixXd x0, double mu, double epsilon, double gamma, int M)
 {
 	// Calculate the min value of f(x)+g(x). Input fmode, hmode, tmode to decide f, h and the mode of line searching.
 	// A and b are the paramters of f. x0 is the initial value of iteration. mu is the coefficent before h.
@@ -59,7 +75,9 @@ Result ProxGD_one_step(Objective &f_obj, Penalty &h_penalty, string tmode, Matri
 	int iter = 0;
 	double t;
 	double *fhs = new double[M];
-	fhs[0] = f_obj.f(new_x);
+	Objective f_obj(fmode, A, b);
+	Penalty h_penalty(hmode, mu);
+	fhs[0] = f_obj.f(new_x) + mu * h_penalty.h(new_x);
 	for (int i = 1; i < M; i++)
 	{
 		fhs[i] = fhs[0];
@@ -90,30 +108,20 @@ Result ProxGD_one_step(Objective &f_obj, Penalty &h_penalty, string tmode, Matri
 
 		prev_x = new_x;
 		new_x = h_penalty.prox_h(x_star, t * mu); // Here, we use prox_h to calculate new x.
-
 		delta_x = new_x - prev_x;
 		// Update prev_x after updating new_x. Update delta_x at last.
 
 		iter = iter + 1;
 		// Update the iteration times.
 
-		fhs[iter % M] = f_obj.f(new_x);
+		fhs[iter % M] = f_obj.f(new_x) + mu * h_penalty.h(new_x);
+		;
 		// Update the function value.
 	}
-	double penalty_value;
-	if (h_penalty.get_mode().substr(0, 3) != "Ind")
-	{
-		penalty_value = h_penalty.h(new_x);
-	}
-	else
-	{
-		penalty_value = 0.0;
-	}
 
-	Result res(iter, new_x, fhs[iter % M], penalty_value);
-
+	Result res(iter, new_x, fhs[iter % M]);
 	end = clock();
 	double endtime = (double)(end - start) / CLOCKS_PER_SEC;
-	res.add_time(endtime); // Calculate the cpu time.
+	res.add_time(endtime);// Calculate the cpu time.
 	return res;
 }
