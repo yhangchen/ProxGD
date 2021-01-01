@@ -168,10 +168,11 @@ void sparsity_test(Objective &f_obj, Penalty &h_penalty, string tmode, MatrixXd 
     string fmode = f_obj.get_mode();
     string hmode = h_penalty.get_mode();
     double mu = h_penalty.get_mu();
+
     Eigen::MatrixXd x0((*A).cols(), (*b).cols());
     x0.setRandom();
     // Initialize A£¬b£¬x0, ecact_x.
-    Result res = ProxGD_one_step(f_obj, h_penalty, tmode, A, b, x0, mu);
+    Result res = ProxGD(f_obj, h_penalty, tmode, A, b, x0, mu);
     res.add_exact_x(exact_x);
     res.show();
     // Calculate and show the result.
@@ -228,11 +229,8 @@ void main_sparsity_vector_test()
     cout << hmode << endl;
     sparsity_test(f_obj, h_penalty, tmode, exact_x);
     hmode = "Elastic";
-    h_penalty = Penalty(hmode, 1, mu);
-    cout << hmode << endl;
-    sparsity_test(f_obj, h_penalty, tmode, exact_x);
-    hmode = "TV_1D";
-    h_penalty = Penalty(hmode, 1, mu, n, r);
+    double alpha = 0.5;
+    h_penalty = Penalty(hmode, 2, mu, alpha);
     cout << hmode << endl;
     sparsity_test(f_obj, h_penalty, tmode, exact_x);
 }
@@ -274,14 +272,19 @@ void main_sparsity_mat_test()
     h_penalty = Penalty(hmode, 1, mu);
     cout << hmode << endl;
     sparsity_test(f_obj, h_penalty, tmode, exact_x);
+    hmode = "Elastic";
+    double alpha = 0.5;
+    h_penalty = Penalty(hmode, 2, mu, alpha);
+    cout << hmode << endl;
+    sparsity_test(f_obj, h_penalty, tmode, exact_x);
 }
 
 int main()
 {
     main_sparsity_vector_test(); // L0,L1,L2,Linf,Elastic
     main_sparsity_mat_test();    // L12,L21.
-    denoise_mat("img_noise", "img", "Frob", "Ind_rank", "BB", 512, 512, 10);
-    denoise_vec("fragment1_noise", "fragment1", "Frob", "TV_1D", "BB", 44100, 1, 0.01);
-    denoise_vec("fragment2_noise", "fragment2", "Frob", "TV_1D", "BB", 52920, 1, 0.01);
+    // denoise_mat("img_noise", "img", "Frob", "Ind_rank", "BB", 512, 512, 10);
+    // denoise_vec("fragment1_noise", "fragment1", "Frob", "TV_1D", "BB", 44100, 1, 0.1);
+    // denoise_vec("fragment2_noise", "fragment2", "Frob", "TV_1D", "BB", 52920, 1, 0.1);
     return 0;
 }

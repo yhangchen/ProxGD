@@ -8,6 +8,8 @@
 #include <assert.h>
 #include <string>
 #include <ctime>
+#include <cfloat>
+
 using namespace Eigen;
 using namespace std;
 
@@ -18,7 +20,7 @@ Result ProxGD(Objective &f_obj, Penalty &h_penalty, string tmode, MatrixXd *A, M
 	// Start timing.
 
 	int K = ceil(fabs(log2f(mu)));
-	double muk = max(mu, ((*A).transpose() * *b).cwiseAbs().maxCoeff() / 2);
+	double muk = mu * pow(2, K);
 	Result res(0, x0, 0, 0);
 	int iter = 0;
 	double epsilonk = epsilon * pow(2, K);
@@ -46,7 +48,6 @@ Result ProxGD_one_step(Objective &f_obj, Penalty &h_penalty, string tmode, Matri
 	clock_t start, end;
 	start = clock();
 	// Start timing.
-
 	MatrixXd new_x = x0;
 	MatrixXd prev_x = x0;
 	MatrixXd delta_x = x0;

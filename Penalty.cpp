@@ -57,9 +57,9 @@ Penalty::Penalty(string mode0, int n, ...)
         va_list args;
         va_start(args, n);
 
-        double mu = va_arg(args, double);
+        mu = va_arg(args, double);
         if (mode == "Elastic")
-            double alpha = va_arg(args, double);
+            alpha = va_arg(args, double);
         else if (mode == "GLasso")
         {
             D_T = va_arg(args, MatrixXd);
