@@ -22,7 +22,7 @@ void save_file(string name, string datatype, MatrixXd &A)
     // Save the matrix A as csv files. name is the file name without ".csv".
     // The file will be in the folder "data".
     stringstream ss;
-    ss << "./data/" << name << datatype << ".csv ";
+    ss << "./results/" << name << datatype << ".csv ";
     ss >> name;
     ofstream fout;
     fout.open(name, ios::out | ios::trunc);
@@ -86,32 +86,73 @@ MatrixXd read_mat(int row, int col, string name)
     return A;
 }
 
-double denoise(string name1, string name2, int row, int col)
+double denoise_mat(string name1, string name2, string fmode, string hmode, string tmode, int row, int col, double mu)
 {
     string path1;
     string path2;
     string path3;
-    MatrixXd A(row, row);
+    SparseMatrix<double> A(row, row);
+    MatrixXd min_point;
     A.setIdentity();
     cout << "Denoise" << endl;
     for (int i = 0; i < 3; i++)
     {
-
-        path1 = "./image/" + name1 + to_string(i + 1) + ".csv";
+        path1 = "./datasets/" + name1 + to_string(i + 1) + ".csv";
         MatrixXd x0 = read_mat(row, col, path1) / 255.0;
-        path2 = "./image/" + name2 + to_string(i + 1) + ".csv";
+        path2 = "./datasets/" + name2 + to_string(i + 1) + ".csv";
         MatrixXd x_exact = read_mat(row, col, path2) / 255.0;
-
-        Objective f_obj("Frob", &A, &x_exact);
-        string tmode = "BB";
-        string hmode = "Ind_rank";
-        Penalty h_penalty(hmode, 1, 10);
-        Result res = ProxGD_one_step(f_obj, h_penalty, tmode, &A, &x0, x0, 10);
+        Objective_Sparse f_obj(fmode, &A, &x0);
+        Penalty h_penalty(hmode, 1, mu);
+        if ((hmode == (string) "Ind_rank") || (hmode == (string) "Ind_L_0"))
+        {
+            int R = mu;
+            h_penalty = Penalty(hmode, 1, R);
+        }
+        Result res = ProxGD_Sparse_one_step(f_obj, h_penalty, tmode, &A, &x0, x0, mu);
         res.add_exact_x(x_exact);
         res.show();
-        path3 = name2 + "_denoise_" + to_string(i + 1) + ".csv";
-        MatrixXd min_point = res.min_point();
-        save_file(path3, "_A", A);
+        path3 = name2 + fmode + "_" + hmode + "_" + tmode + "_denoiseMat_" + to_string(i + 1) + ".csv";
+        min_point = res.min_point();
+        // save_file(path3, "_A", A);
+        save_file(path3, "_b", x_exact);
+        save_file(path3, "_x0", x0);
+        save_file(path3, "_x", min_point);
+    }
+
+    return 0.0;
+}
+
+double denoise_vec(string name1, string name2, string fmode, string hmode, string tmode, int row, int col, double mu)
+{
+    string path1;
+    string path2;
+    string path3;
+    stringstream ss;
+    SparseMatrix<double> A(row, row);
+    MatrixXd min_point;
+    A.setIdentity();
+    for (int i = 0; i < 2; i++)
+    {
+        path1 = "";
+        path2 = "";
+        path3 = "";
+        ss.str("");
+        ss.clear();
+        ss << "./datasets/" << name1 << i + 1 << ".csv";
+        ss >> path1;
+        MatrixXd x0 = read_mat(row, 1, path1);
+        ss.str("");
+        ss.clear();
+        ss << "./datasets/" << name2 << i + 1 << ".csv";
+        ss >> path2;
+        MatrixXd x_exact = read_mat(row, 1, path2);
+        Objective_Sparse f_obj(fmode, &A, &x0);
+        Penalty h_penalty(hmode, 3, mu, row, col);
+        Result res = ProxGD_Sparse_one_step(f_obj, h_penalty, tmode, &A, &x0, x0, mu);
+        res.add_exact_x(x_exact);
+        res.show();
+        path3 = name2 + fmode + "_" + hmode + "_" + tmode + "_denoiseVec_" + to_string(i + 1) + ".csv";
+        min_point = res.min_point();
         save_file(path3, "_b", x_exact);
         save_file(path3, "_x0", x0);
         save_file(path3, "_x", min_point);
@@ -237,8 +278,10 @@ void main_sparsity_mat_test()
 
 int main()
 {
-    main_sparsity_vector_test(); // L0,L1,L2,Linf,Elastic, TV_1D
+    main_sparsity_vector_test(); // L0,L1,L2,Linf,Elastic
     main_sparsity_mat_test();    // L12,L21.
-    denoise("img_noise", "img", 512, 512);
+    denoise_mat("img_noise", "img", "Frob", "Ind_rank", "BB", 512, 512, 10);
+    denoise_vec("fragment1_noise", "fragment1", "Frob", "TV_1D", "BB", 44100, 1, 0.01);
+    denoise_vec("fragment2_noise", "fragment2", "Frob", "TV_1D", "BB", 52920, 1, 0.01);
     return 0;
 }
