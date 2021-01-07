@@ -83,7 +83,7 @@ double sparsity(MatrixXd x)
 	int m = x.rows();
 	int n = x.cols();
 	int sp = 0;
-	int threshold = x.cwiseAbs().maxCoeff() * 1e-6;
+	int threshold = x.cwiseAbs().maxCoeff() * 1e-5;
 	for (int i = 0; i < m; i++)
 	{
 		for (int j = 0; j < n; j++)

@@ -94,9 +94,10 @@ double denoise_mat(string name1, string name2, string fmode, string hmode, strin
     SparseMatrix<double> A(row, row);
     MatrixXd min_point;
     A.setIdentity();
-    cout << "Denoise" << endl;
+    cout << "Denoise Mat" << endl;
     for (int i = 0; i < 3; i++)
     {
+        cout << "layer:" << i + 1 << endl;
         path1 = "./datasets/" + name1 + to_string(i + 1) + ".csv";
         MatrixXd x0 = read_mat(row, col, path1) / 255.0;
         path2 = "./datasets/" + name2 + to_string(i + 1) + ".csv";
@@ -131,8 +132,13 @@ double denoise_vec(string name1, string name2, string fmode, string hmode, strin
     SparseMatrix<double> A(row, row);
     MatrixXd min_point;
     A.setIdentity();
+    cout << "Denoise Vec" << endl;
     for (int i = 0; i < 2; i++)
     {
+        if (i == 0)
+            cout << "left channel" << endl;
+        else
+            cout << "right channel" << endl;
         path1 = "";
         path2 = "";
         path3 = "";
@@ -180,6 +186,7 @@ void sparsity_test(Objective &f_obj, Penalty &h_penalty, string tmode, MatrixXd 
     MatrixXd min_point = res.min_point();
     save_file(name, "_A", *A);
     save_file(name, "_b", *b);
+    save_file(name, "_exact_x", exact_x);
     save_file(name, "_x0", x0);
     save_file(name, "_x", min_point);
 }
@@ -283,8 +290,10 @@ int main()
 {
     main_sparsity_vector_test(); // L0,L1,L2,Linf,Elastic
     main_sparsity_mat_test();    // L12,L21.
-    // denoise_mat("img_noise", "img", "Frob", "Ind_rank", "BB", 512, 512, 10);
-    // denoise_vec("fragment1_noise", "fragment1", "Frob", "TV_1D", "BB", 44100, 1, 0.1);
+    // denoise_mat("img_noise", "img", "Frob", "Ind_nuclear", "BB", 512, 512, 100);
+    // denoise_mat("img_noise", "img", "Frob", "Ind_rank", "BB", 512, 512, 100);
+    // denoise_mat("img_noise", "img", "Frob", "nuclear", "BB", 512, 512, 10);
+    // denoise_mat("img_noise", "img", "Frob", "TV_2D", "BB", 512, 512, 10);
     // denoise_vec("fragment2_noise", "fragment2", "Frob", "TV_1D", "BB", 52920, 1, 0.1);
     return 0;
 }
