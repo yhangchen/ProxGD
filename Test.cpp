@@ -288,11 +288,11 @@ void main_sparsity_mat_test()
 
 int main()
 {
-    main_sparsity_vector_test(); // L0,L1,L2,Linf,Elastic
-    main_sparsity_mat_test();    // L12,L21.
-    // denoise_mat("img_noise", "img", "Frob", "Ind_nuclear", "BB", 512, 512, 100);
-    // denoise_mat("img_noise", "img", "Frob", "Ind_rank", "BB", 512, 512, 100);
-    // denoise_mat("img_noise", "img", "Frob", "nuclear", "BB", 512, 512, 10);
+    // main_sparsity_vector_test(); // L0,L1,L2,Linf,Elastic
+    // main_sparsity_mat_test();    // L12,L21.
+    denoise_mat("img_noise", "img", "Frob", "Ind_nuclear", "BB", 512, 512, 100);
+    denoise_mat("img_noise", "img", "Frob", "Ind_rank", "BB", 512, 512, 100);
+    denoise_mat("img_noise", "img", "Frob", "nuclear", "BB", 512, 512, 10);
     // denoise_mat("img_noise", "img", "Frob", "TV_2D", "BB", 512, 512, 10);
     // denoise_vec("fragment2_noise", "fragment2", "Frob", "TV_1D", "BB", 52920, 1, 0.1);
     return 0;

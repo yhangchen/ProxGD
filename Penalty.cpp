@@ -584,18 +584,17 @@ double Penalty::Elastic(MatrixXd x)
 MatrixXd Penalty::Elastic_prox(MatrixXd x)
 {
     assert((0.0 <= alpha) && (alpha <= 1.0));
-    MatrixXd result = x;
     for (int i = 0; i < x.rows(); i++)
     {
         double normx = x.row(i).norm();
         if (normx <= alpha * mu)
         {
-            result.row(i) *= 0.0;
+            x.row(i) *= 0.0;
         }
         double flag = (1 - alpha * mu / normx) / (1.0 + (1.0 - alpha) * mu);
-        result.row(i) *= max(flag, 0.0);
+        x.row(i) *= max(flag, 0.0);
     }
-    return result;
+    return x;
 }
 
 MatrixXd Penalty::L_1_prox(MatrixXd x)
