@@ -31,7 +31,7 @@ cvx_begin
     elseif mode == "elastic"
         alpha=opt{2};
         minimize(square_pos(norm(A * x - b, 'fro')) / 2 + ...
-            mu * (alpha*sum(norms(x, 2, 2))+square_pos((1-alpha)/2*norm(x,'fro'))));
+            mu * (alpha*sum(norms(x, 2, 2))+(1-alpha)/2*square_pos(norm(x,'fro'))));
     elseif mode == "l21"
         minimize(square_pos(norm(A * x - b, 'fro')) / 2 + ...
             mu * sum(norms(x', 2, 2)));

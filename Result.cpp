@@ -74,7 +74,7 @@ double err_function(MatrixXd x, MatrixXd x0)
 {
 	// Calculate the error.
 	MatrixXd delta_x = x - x0;
-	return delta_x.norm() / (1 + x0.norm());
+	return delta_x.norm() / (1 + max(x0.norm(), x.norm()));
 }
 
 double sparsity(MatrixXd x)

@@ -541,7 +541,7 @@ MatrixXd Penalty::GLasso_prox(MatrixXd x)
         MatrixXd W_init = MatrixXd::Zero(D_T.cols(), x.cols());
         Objective f_obj("Frob", &D_T, x_p);
         Penalty h_penalty("Ind_L_inf_2", 1, mu);
-        Result W = ProxGD(f_obj, h_penalty, "BB", &D_T, x_p, W_init, mu);
+        Result W = ProxGD_one_step(f_obj, h_penalty, "BB", &D_T, x_p, W_init, mu);
         MatrixXd W0 = W.min_point();
         return x + D_T * W0;
     }
@@ -551,7 +551,7 @@ MatrixXd Penalty::GLasso_prox(MatrixXd x)
         MatrixXd W_init = MatrixXd::Zero(D_sp_T.cols(), x.cols());
         Objective_Sparse f_obj("Frob", &D_sp_T, x_p);
         Penalty h_penalty("Ind_L_inf_2", 1, mu);
-        Result W = ProxGD_Sparse(f_obj, h_penalty, "BB", &D_sp_T, x_p, W_init, mu);
+        Result W = ProxGD_Sparse_one_step(f_obj, h_penalty, "BB", &D_sp_T, x_p, W_init, mu);
         MatrixXd W0 = W.min_point();
         return x + D_sp_T * W0;
     }

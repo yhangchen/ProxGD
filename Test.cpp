@@ -103,12 +103,7 @@ double denoise_mat(string name1, string name2, string fmode, string hmode, strin
         path2 = "./datasets/" + name2 + to_string(i + 1) + ".csv";
         MatrixXd x_exact = read_mat(row, col, path2) / 255.0;
         Objective_Sparse f_obj(fmode, &A, &x0);
-        Penalty h_penalty(hmode, 1, mu);
-        if ((hmode == (string) "Ind_rank") || (hmode == (string) "Ind_L_0"))
-        {
-            int R = mu;
-            h_penalty = Penalty(hmode, 1, R);
-        }
+        Penalty h_penalty(hmode, 3, mu, row, col);
         Result res = ProxGD_Sparse_one_step(f_obj, h_penalty, tmode, &A, &x0, x0, mu);
         res.add_exact_x(x_exact);
         res.show();
@@ -290,10 +285,7 @@ int main()
 {
     // main_sparsity_vector_test(); // L0,L1,L2,Linf,Elastic
     // main_sparsity_mat_test();    // L12,L21.
-    denoise_mat("img_noise", "img", "Frob", "Ind_nuclear", "BB", 512, 512, 100);
-    denoise_mat("img_noise", "img", "Frob", "Ind_rank", "BB", 512, 512, 100);
-    denoise_mat("img_noise", "img", "Frob", "nuclear", "BB", 512, 512, 10);
-    // denoise_mat("img_noise", "img", "Frob", "TV_2D", "BB", 512, 512, 10);
+    denoise_mat("img_noise", "img", "Frob", "TV_2D", "BB", 512, 512, 1);
     // denoise_vec("fragment2_noise", "fragment2", "Frob", "TV_1D", "BB", 52920, 1, 0.1);
     return 0;
 }

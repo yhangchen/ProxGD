@@ -14,7 +14,7 @@ x0 = load("results/Frob_L_0_BB_x0.csv");
 errfun = @(x1, x2) norm(x1 - x2, 'fro') / (1 + norm(x1,'fro'));
 errfun_exact = @(x, l) norm(x(:, 1: l) - u(:, 1: l), 'fro') /...
     (1 + norm(u(:, 1: l),'fro'));
-sparisity = @(x, l) sum(abs(x(:)) > 1E-5 * max(abs(x(:)))) /(n*l);
+sparisity = @(x, l) sum(abs(x(:)) > 1E-6 * max(abs(x(:)))) /(n*l);
 %, "linf", "TV1D", "TV2D", "nuclear", {"ind_nuclear", 1}
 L = 4;
 opt_lst = {"l12", "l21",{"elastic",0.5},"linf"};
