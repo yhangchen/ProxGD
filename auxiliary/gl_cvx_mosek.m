@@ -1,6 +1,6 @@
 function [x, iter, out, penal] = gl_cvx_mosek(x0, A, b, mu, opt)
-%GL_CVX_MOSEK 此处显示有关此函数的摘要
-%   此处显示详细说明
+%GL_CVX_MOSEK 锟剿达拷锟斤拷示锟叫关此猴拷锟斤拷锟斤拷摘要
+%   锟剿达拷锟斤拷示锟斤拷细说锟斤拷
 % cvx version:
 [n, l] = size(x0);
 mode = opt{1};
@@ -57,7 +57,7 @@ if mode == "linf"
 elseif mode == "l12"
     penal = sum(norms(x, 2, 2));
 elseif mode == "elastic"
-    penal = alpha*(sum(norms(x, 2, 2))+(1-alpha)/2*norm(x,'fro')^2);
+    penal = alpha*sum(norms(x, 2, 2))+(1-alpha)/2*norm(x,'fro')^2;
 elseif mode == "l21"
     penal = sum(norms(x', 2, 2));
 elseif mode == "TV1D"

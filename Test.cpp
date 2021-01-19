@@ -149,7 +149,7 @@ double denoise_vec(string name1, string name2, string fmode, string hmode, strin
         MatrixXd x_exact = read_mat(row, 1, path2);
         Objective_Sparse f_obj(fmode, &A, &x0);
         Penalty h_penalty(hmode, 3, mu, row, col);
-        Result res = ProxGD_Sparse_one_step(f_obj, h_penalty, tmode, &A, &x0, x0, mu);
+        Result res = ProxGD_Sparse_one_step(f_obj, h_penalty, tmode, &A, &x0, x0, mu, 1e-6);
         res.add_exact_x(x_exact);
         res.show();
         path3 = name2 + fmode + "_" + hmode + "_" + tmode + "_denoiseVec_" + to_string(i + 1) + ".csv";
@@ -173,7 +173,7 @@ void sparsity_test(Objective &f_obj, Penalty &h_penalty, string tmode, MatrixXd 
     Eigen::MatrixXd x0((*A).cols(), (*b).cols());
     x0.setRandom();
     // Initialize A£¬b£¬x0, ecact_x.
-    Result res = ProxGD(f_obj, h_penalty, tmode, A, b, x0, mu);
+    Result res = ProxGD(f_obj, h_penalty, tmode, A, b, x0, mu, 1e-10);
     res.add_exact_x(exact_x);
     res.show();
     // Calculate and show the result.
@@ -283,9 +283,8 @@ void main_sparsity_mat_test()
 
 int main()
 {
-    // main_sparsity_vector_test(); // L0,L1,L2,Linf,Elastic
-    // main_sparsity_mat_test();    // L12,L21.
-    denoise_mat("img_noise", "img", "Frob", "TV_2D", "BB", 512, 512, 1);
-    // denoise_vec("fragment2_noise", "fragment2", "Frob", "TV_1D", "BB", 52920, 1, 0.1);
+    main_sparsity_vector_test(); // L0,L1,L2,Linf,Elastic
+    main_sparsity_mat_test();    // L12,L21.
+    denoise_vec("fragment2_noise", "fragment2", "Frob", "TV_1D", "BB", 52920, 1, 0.1);
     return 0;
 }

@@ -4,20 +4,30 @@
 
 % generate data
 m=1024;n=512;
-A = load("results/Frob_L_0_BB_A.csv");
-b = load("results/Frob_L_0_BB_b.csv");
-u = load("results/Frob_L_0_BB_exact_x.csv");
+A = load("../results/Frob_L_0_BB_A.csv");
+b = load("../results/Frob_L_0_BB_b.csv");
+u = load("../results/Frob_L_0_BB_exact_x.csv");
 mu = 1e-2;
-l = 1;
-x0 = load("results/Frob_L_0_BB_x0.csv");
+l = 1; L = 4;
+x0 = load("../results/Frob_L_0_BB_x0.csv");
+opt_lst = {"l12", "l21",{"elastic",0.5},"linf"};
+
+
+% change to the following for matrix
+% A = load("../results/Frob_L_12_BB_A.csv");
+% b = load("../results/Frob_L_12_BB_b.csv");
+% u = load("../results/Frob_L_12_BB_exact_x.csv");
+% mu = 1e-2;
+% l = 4; L = 3;
+% x0 = load("../results/Frob_L_12_BB_x0.csv");
+% opt_lst = {"l12", "l21",{"elastic",0.5}};
+
 
 errfun = @(x1, x2) norm(x1 - x2, 'fro') / (1 + norm(x1,'fro'));
 errfun_exact = @(x, l) norm(x(:, 1: l) - u(:, 1: l), 'fro') /...
     (1 + norm(u(:, 1: l),'fro'));
 sparisity = @(x, l) sum(abs(x(:)) > 1E-6 * max(abs(x(:)))) /(n*l);
 %, "linf", "TV1D", "TV2D", "nuclear", {"ind_nuclear", 1}
-L = 4;
-opt_lst = {"l12", "l21",{"elastic",0.5},"linf"};
 x_lst = cell(1, L);
 iter_lst = zeros(1, L);
 out_lst = zeros(1, L);
